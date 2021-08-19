@@ -1,0 +1,372 @@
+{
+	"name": "4 - SFTP - basic individual",
+	"properties": {
+		"activities": [
+			{
+				"name": "List files",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "Find source folder path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:01:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "SFTPFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"UserName": {
+								"value": "@pipeline().parameters.Username",
+								"type": "Expression"
+							},
+							"KeyVaultSecretName": {
+								"value": "@pipeline().parameters.SecretName",
+								"type": "Expression"
+							},
+							"FolderPath": {
+								"value": "@concat('/', activity('Find source folder path').output.value[0].value)",
+								"type": "Expression"
+							},
+							"Host": {
+								"value": "@pipeline().parameters.Host",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "SftpReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "Find source folder path",
+				"type": "Filter",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.Config",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@equals(item().key, 'path')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "List current raw files",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "Set data lake folder path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:01:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DataLakeFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"Container": "raw",
+							"FolderPath": {
+								"value": "@variables('FolderPath')",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "Set data lake folder path",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "FolderPath",
+					"value": {
+						"value": "@concat(pipeline().parameters.DataProvider, '/', pipeline().parameters.Table)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "List current archive files",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "Set data lake folder path",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:01:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DataLakeFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"Container": "archive",
+							"FolderPath": {
+								"value": "@variables('FolderPath')",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "For each found file",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Only files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set KnownFiles",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('List files').output.childItems",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "If new file",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@not(contains(variables('KnownFiles'), item()))",
+									"type": "Expression"
+								},
+								"ifTrueActivities": [
+									{
+										"name": "Move file to raw",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.00:01:00",
+											"retry": 3,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "BinarySource",
+												"storeSettings": {
+													"type": "SftpReadSettings",
+													"recursive": false,
+													"deleteFilesAfterCompletion": false
+												},
+												"formatSettings": {
+													"type": "BinaryReadSettings"
+												}
+											},
+											"sink": {
+												"type": "BinarySink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												}
+											},
+											"enableStaging": false
+										},
+										"inputs": [
+											{
+												"referenceName": "SFTPFile",
+												"type": "DatasetReference",
+												"parameters": {
+													"UserName": {
+														"value": "@pipeline().parameters.Username",
+														"type": "Expression"
+													},
+													"KeyVaultSecretName": {
+														"value": "@pipeline().parameters.SecretName",
+														"type": "Expression"
+													},
+													"FolderPath": {
+														"value": "@activity('Find source folder path').output.value[0].value",
+														"type": "Expression"
+													},
+													"FileName": {
+														"value": "@item().name",
+														"type": "Expression"
+													},
+													"Host": {
+														"value": "@pipeline().parameters.Host",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "DataLakeFolder",
+												"type": "DatasetReference",
+												"parameters": {
+													"Container": "raw",
+													"FolderPath": {
+														"value": "@variables('FolderPath')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Only files",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "List files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('List files').output.childItems",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@equals(item().type, 'File')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set KnownFiles",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "List current raw files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "List current archive files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "KnownFiles",
+					"value": {
+						"value": "@union(activity('List current raw files').output.childItems, activity('List current archive files').output.childItems)",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"DataProvider": {
+				"type": "string"
+			},
+			"Table": {
+				"type": "string"
+			},
+			"Host": {
+				"type": "string"
+			},
+			"Username": {
+				"type": "string"
+			},
+			"SecretName": {
+				"type": "string"
+			},
+			"Config": {
+				"type": "array"
+			}
+		},
+		"variables": {
+			"FolderPath": {
+				"type": "String"
+			},
+			"KnownFiles": {
+				"type": "Array"
+			}
+		},
+		"annotations": []
+	}
+}

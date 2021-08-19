@@ -1,0 +1,18 @@
+{
+    "name": "testsftp",
+    "connection": "sftp",
+    "config": {
+        "authentication": "basic",
+        "self_hosted_integration_runtime": true,
+        "host": "20.90.155.110",
+        "username": "testuser",
+        "key_vault_name": "testsftp-password",
+        "key_vault_secret": "testsftp-password"
+    },
+    "tables": [
+        {
+            "name": "random_data_1",
+            "path": "random_data_1"
+        }
+    ]
+}
