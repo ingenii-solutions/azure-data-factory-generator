@@ -1,14 +1,17 @@
 import json
 from os import listdir, mkdir, path
 
-from templates.linked_service import linked_services_templates
-from templates.dataset import connection_data_sets
+from sftp import SFTPPipeline
 
 config_folder = "example_configs"
 generated_folder = "generated"
 data_set_folder = f"{generated_folder}/dataset"
 if not path.exists(data_set_folder):
     mkdir(data_set_folder)
+
+connection_types = {
+    "sftp": SFTPPipeline
+}
 
 
 # all_configs = listdir(config_folder)
@@ -34,7 +37,7 @@ for config_file_name in all_configs:
 # Determine required linked services and data sets
 linked_services = {
     conn: {
-        auth: linked_services_templates[conn][auth]
+        auth: connection_types[conn].authentications[auth]["linked_service"]
         for auth in auths
     }
     for conn, auths in types.items()
@@ -44,7 +47,7 @@ linked_services = {
 for conn, auths in linked_services.items():
     for auth, linked_service_json in auths.items():
         
-        for data_set_json in connection_data_sets[conn]:
+        for data_set_json in connection_types[conn].connection_data_sets:
             
             ds_name = data_set_json["name"]
             if ds_name.lower().startswith(conn.lower()):

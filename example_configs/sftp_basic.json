@@ -7,7 +7,7 @@
         "host": "20.90.155.110",
         "username": "testuser",
         "key_vault_name": "df_key_vault",
-        "key_vault_secret": "testsftp-password"
+        "key_vault_secret_name": "testsftp-password"
     },
     "tables": [
         {
