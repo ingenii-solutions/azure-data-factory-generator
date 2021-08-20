@@ -1,4 +1,4 @@
-{
+sftp_basic_key_vault = {
 	"name": "SFTPBasicKeyVault",
 	"properties": {
 		"type": "Sftp",
@@ -20,7 +20,7 @@
 		"typeProperties": {
 			"host": "@{linkedService().Host}",
 			"port": 22,
-			"skipHostKeyValidation": true,
+			"skipHostKeyValidation": True,
 			"authenticationType": "Basic",
 			"userName": "@{linkedService().UserName}",
 			"password": {
@@ -33,4 +33,10 @@
 			}
 		}
 	}
+}
+
+linked_services_templates = {
+    "sftp": {
+        "basic": sftp_basic_key_vault
+    }
 }
