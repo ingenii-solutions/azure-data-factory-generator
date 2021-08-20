@@ -14,7 +14,7 @@ class SFTPPipeline(DataFactoryPipeline):
             "linked_service": sftp_basic_key_vault
         }
     }
-    connection_data_sets = [sftp_folder, sftp_file]
+    source_data_sets = [sftp_folder, sftp_file]
     required_linked_services = [data_lake]
 
     required_table_parameters = ["name", "path"]

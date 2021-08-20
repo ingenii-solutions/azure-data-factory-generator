@@ -13,7 +13,6 @@ connection_types = {
     "sftp": SFTPPipeline
 }
 
-
 # all_configs = listdir(config_folder)
 # Pretend this is all configs
 all_configs = ["sftp_basic.json"]
@@ -47,7 +46,7 @@ linked_services = {
 for conn, auths in linked_services.items():
     for auth, linked_service_json in auths.items():
         
-        for data_set_json in connection_types[conn].connection_data_sets:
+        for data_set_json in connection_types[conn].source_data_sets:
             
             ds_name = data_set_json["name"]
             if ds_name.lower().startswith(conn.lower()):
