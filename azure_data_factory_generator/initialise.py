@@ -102,31 +102,39 @@ class CreateDataFactoryObjects:
             self.all_data_sets[ds_id] = data_set_json
         return self.all_data_sets[ds_id]
 
+    def create_data_sets_per_obj(self, conn_type, auth_type):
+        pipeline_obj = self.connection_types[conn_type]
+        return {
+            **{
+                data_set_id: self.generate_data_set_json(
+                    conn_type,
+                    pipeline_obj.authentications[auth_type]["linked_service"], 
+                    data_set_json)
+                for data_set_id, data_set_json in pipeline_obj.source_data_sets.items()
+            },
+            **{
+                data_set_id: self.generate_data_set_json(
+                    conn_type, 
+                    pipeline_obj.target_linked_service, 
+                    data_set_json)
+                for data_set_id, data_set_json in pipeline_obj.target_data_sets.items()
+            }
+        }
+
     data_sets_per_type = {}
 
     def find_data_sets_per_type(self):
-
-        # Generate the data sets per linked service
-        for conn, auths in self.all_connection_types.items():
-            self.data_sets_per_type[conn] = {}
-
-            for auth in auths:
-                self.data_sets_per_type[conn][auth] = {}
-
-                for data_set_id, data_set_json in self.connection_types[conn].source_data_sets.items():
-                    self.data_sets_per_type[conn][auth][data_set_id] = \
-                        self.generate_data_set_json(
-                            conn, 
-                            self.connection_types[conn].authentications[auth]["linked_service"], 
-                            data_set_json)
-                for data_set_id, data_set_json in self.connection_types[conn].target_data_sets.items():
-                    self.data_sets_per_type[conn][auth][data_set_id] = \
-                        self.generate_data_set_json(
-                            conn, 
-                            self.connection_types[conn].target_linked_service, 
-                            data_set_json)
-
-        return self.data_sets_per_type
+        # Generate the data sets per linked service and authentication
+        self.data_sets_per_type = {
+            conn: {
+                auth: {
+                    ds_id: ds_json
+                    for ds_id, ds_json in self.create_data_sets_per_obj(conn, auth).items()
+                }
+                for auth in auths
+            }
+            for conn, auths in self.all_connection_types.items()
+        }
 
     all_pipelines = {}
 
