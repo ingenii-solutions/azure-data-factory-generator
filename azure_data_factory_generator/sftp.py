@@ -1,9 +1,10 @@
-from activities.data_lake import get_data_lake_files
-from activities.generic import filter_for_files
-from base import DataFactoryPipeline
-from templates.linked_service.data_lake import data_lake
-from templates.linked_service.sftp import sftp_basic_key_vault
-from templates.dataset.sftp import sftp_folder, sftp_file
+from .activities.data_lake import get_data_lake_files
+from .activities.generic import filter_for_files
+from .base import DataFactoryPipeline
+from .templates.linked_service.data_lake import data_lake
+from .templates.linked_service.sftp import sftp_basic_key_vault
+from .templates.dataset.data_lake import data_lake_folder
+from .templates.dataset.sftp import sftp_folder, sftp_file
 
 class SFTPPipeline(DataFactoryPipeline):
 
@@ -14,19 +15,28 @@ class SFTPPipeline(DataFactoryPipeline):
             "linked_service": sftp_basic_key_vault
         }
     }
-    source_data_sets = [sftp_folder, sftp_file]
-    required_linked_services = [data_lake]
+    source_data_sets = {
+        "source_folder": sftp_folder, 
+        "source_file" : sftp_file
+    }
+    target_linked_service = data_lake
+    target_data_sets = {
+        "target_folder": data_lake_folder
+    }
 
     required_table_parameters = ["name", "path"]
     # TODO: implement prefix and suffix checks
     #optional_table_parameters = ["zipped", "prefix", "suffix"]
 
-    def __init__(self, config, table_definition, data_sets):
+    def __init__(self, data_provider, authentication, 
+                 config, table_definition, data_sets):
+        self.data_provider = data_provider
+        self.authentication = authentication
         self.config = config
         self.table_definition = table_definition
         self.data_sets = data_sets
 
-        self.data_lake_path = self.config["name"] + "/" + self.table_definition["name"]
+        self.data_lake_path = self.data_provider + "/" + self.table_definition["name"]
 
         super(SFTPPipeline, self).__init__(self.data_lake_path.replace("/", "-"))        
 

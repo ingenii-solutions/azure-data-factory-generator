@@ -1,8 +1,8 @@
 {
     "name": "testsftp",
+    "connection": "sftp",
+    "authentication": "basic",
     "config": {
-        "connection": "sftp",
-        "authentication": "basic",
         "self_hosted_integration_runtime": "SelfHostedIR",
         "host": "20.90.155.110",
         "username": "testuser",
