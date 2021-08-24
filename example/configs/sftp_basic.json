@@ -2,8 +2,8 @@
     "name": "testsftp",
     "connection": "sftp",
     "authentication": "basic",
+    "self_hosted_integration_runtime": "SelfHostedIR",
     "config": {
-        "self_hosted_integration_runtime": "SelfHostedIR",
         "host": "20.90.155.110",
         "username": "testuser",
         "key_vault_name": "df_key_vault",
