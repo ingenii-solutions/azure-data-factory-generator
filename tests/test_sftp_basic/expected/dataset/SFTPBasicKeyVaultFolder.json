@@ -1,0 +1,56 @@
+{
+    "name": "SFTPBasicKeyVaultFolder",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "SFTPBasicKeyVault",
+            "type": "LinkedServiceReference",
+            "parameters": {
+                "Host": {
+                    "value": "@dataset().Host",
+                    "type": "Expression"
+                },
+                "KeyVaultName": {
+                    "value": "@dataset().KeyVaultName",
+                    "type": "Expression"
+                },
+                "KeyVaultSecretName": {
+                    "value": "@dataset().KeyVaultSecretName",
+                    "type": "Expression"
+                },
+                "UserName": {
+                    "value": "@dataset().UserName",
+                    "type": "Expression"
+                }
+            }
+        },
+        "parameters": {
+            "FolderPath": {
+                "type": "string",
+                "defaultValue": "/"
+            },
+            "Host": {
+                "type": "String"
+            },
+            "KeyVaultName": {
+                "type": "String"
+            },
+            "KeyVaultSecretName": {
+                "type": "String"
+            },
+            "UserName": {
+                "type": "String"
+            }
+        },
+        "annotations": [],
+        "type": "Binary",
+        "typeProperties": {
+            "location": {
+                "type": "SftpLocation",
+                "folderPath": {
+                    "value": "@dataset().FolderPath",
+                    "type": "Expression"
+                }
+            }
+        }
+    }
+}

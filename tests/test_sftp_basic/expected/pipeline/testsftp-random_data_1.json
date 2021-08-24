@@ -1,0 +1,268 @@
+{
+    "name": "testsftp-random_data_1",
+    "properties": {
+        "activities": [
+            {
+                "name": "List files at random_data_1",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.00:01:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "SFTPBasicKeyVaultFolder",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "Host": "test_host",
+                            "UserName": "testuser",
+                            "KeyVaultName": "df_key_vault",
+                            "KeyVaultSecretName": "testsftp-password",
+                            "FolderPath": "random_data_1"
+                        }
+                    },
+                    "fieldList": [
+                        "childItems"
+                    ],
+                    "storeSettings": {
+                        "type": "SftpReadSettings",
+                        "recursive": true,
+                        "enablePartitionDiscovery": false
+                    },
+                    "formatSettings": {
+                        "type": "BinaryReadSettings"
+                    }
+                }
+            },
+            {
+                "name": "List raw-testsftp-random_data_1 files",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.00:01:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "DataLakeFolder",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "Container": "raw",
+                            "FolderPath": "testsftp/random_data_1"
+                        }
+                    }
+                },
+                "fieldList": [
+                    "childItems"
+                ],
+                "storeSettings": {
+                    "type": "AzureBlobFSReadSettings",
+                    "recursive": true,
+                    "enablePartitionDiscovery": false
+                },
+                "formatSettings": {
+                    "type": "BinaryReadSettings"
+                }
+            },
+            {
+                "name": "List archive-testsftp-random_data_1 files",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.00:01:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "DataLakeFolder",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "Container": "archive",
+                            "FolderPath": "testsftp/random_data_1"
+                        }
+                    }
+                },
+                "fieldList": [
+                    "childItems"
+                ],
+                "storeSettings": {
+                    "type": "AzureBlobFSReadSettings",
+                    "recursive": true,
+                    "enablePartitionDiscovery": false
+                },
+                "formatSettings": {
+                    "type": "BinaryReadSettings"
+                }
+            },
+            {
+                "name": "Only files from List raw-testsftp-random_data_1 files",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "List raw-testsftp-random_data_1 files",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('List raw-testsftp-random_data_1 files').output.childItems",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().type, 'File')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Only files from List archive-testsftp-random_data_1 files",
+                "type": "Filter",
+                "dependsOn": [
+                    {
+                        "activity": "List archive-testsftp-random_data_1 files",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('List archive-testsftp-random_data_1 files').output.childItems",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@equals(item().type, 'File')",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "For each found file",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "List files at random_data_1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "Only files from List raw-testsftp-random_data_1 files",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "Only files from List archive-testsftp-random_data_1 files",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('List files at random_data_1').output.childItems",
+                        "type": "Expression"
+                    },
+                    "activities": [
+                        {
+                            "name": "If new file",
+                            "type": "IfCondition",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@not(or(contains(activity('Only files from List raw-testsftp-random_data_1 files').output.childItems, item()), contains(activity('Only files from List archive-testsftp-random_data_1 files').output.childItems, item())))",
+                                    "type": "Expression"
+                                },
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Move file to raw",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.00:01:00",
+                                            "retry": 3,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "BinarySource",
+                                                "storeSettings": {
+                                                    "type": "SftpReadSettings",
+                                                    "recursive": false,
+                                                    "deleteFilesAfterCompletion": false
+                                                },
+                                                "formatSettings": {
+                                                    "type": "BinaryReadSettings"
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "BinarySink",
+                                                "storeSettings": {
+                                                    "type": "AzureBlobFSWriteSettings"
+                                                }
+                                            },
+                                            "enableStaging": false
+                                        },
+                                        "inputs": [
+                                            {
+                                                "referenceName": "SFTPBasicKeyVaultFile",
+                                                "type": "DatasetReference",
+                                                "parameters": {
+                                                    "Host": "test_host",
+                                                    "UserName": "testuser",
+                                                    "KeyVaultName": "df_key_vault",
+                                                    "KeyVaultSecretName": "testsftp-password",
+                                                    "FolderPath": "random_data_1",
+                                                    "FileName": {
+                                                        "value": "@item().name",
+                                                        "type": "Expression"
+                                                    }
+                                                }
+                                            }
+                                        ],
+                                        "outputs": [
+                                            {
+                                                "referenceName": "DataLakeFolder",
+                                                "type": "DatasetReference",
+                                                "parameters": {
+                                                    "Container": "raw",
+                                                    "FolderPath": "testsftp/random_data_1"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {},
+        "variables": {},
+        "annotations": []
+    }
+}

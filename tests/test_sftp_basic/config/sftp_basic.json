@@ -1,0 +1,17 @@
+{
+    "name": "testsftp",
+    "connection": "sftp",
+    "authentication": "basic",
+    "config": {
+        "host": "test_host",
+        "username": "testuser",
+        "key_vault_name": "df_key_vault",
+        "key_vault_secret_name": "testsftp-password"
+    },
+    "tables": [
+        {
+            "name": "random_data_1",
+            "path": "random_data_1"
+        }
+    ]
+}
