@@ -1,8 +1,8 @@
 {
     "name": "eodhistoricaldata",
+    "connection": "api",
+    "authentication": "token_parameter",
     "config": {
-        "connection": "api",
-        "authentication": "token_parameter",
         "base_url": "https://eodhistoricaldata.com/api",
         "parameter": "api_token",
         "key_vault_secret_name": "eodhistoricaldata-token",
