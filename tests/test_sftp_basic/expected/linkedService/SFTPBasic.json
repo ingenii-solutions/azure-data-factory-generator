@@ -1,5 +1,5 @@
 {
-    "name": "SFTPBasicKeyVault",
+    "name": "SFTPBasic",
     "properties": {
         "type": "Sftp",
         "parameters": {

@@ -1,8 +1,8 @@
 {
-    "name": "SFTPBasicKeyVaultFolder",
+    "name": "SFTPBasicFolder",
     "properties": {
         "linkedServiceName": {
-            "referenceName": "SFTPBasicKeyVault",
+            "referenceName": "SFTPBasic",
             "type": "LinkedServiceReference",
             "parameters": {
                 "Host": {

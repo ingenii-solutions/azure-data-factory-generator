@@ -25,6 +25,12 @@ class DataFactoryPipeline(ABC):
         "secureInput": False
     }
 
+    data_provider = None
+    authentication = None
+    config = {}
+    table_definition = {}
+    data_sets = {}
+
     @classmethod
     def is_valid_authentication(cls, authentication_method: str) -> bool:
         return authentication_method in cls.authentications
@@ -80,7 +86,50 @@ class DataFactoryPipeline(ABC):
                 for activity in depends_on
                 ]
             })
-
+    
+    def create_pipeline_dataset_reference(self, data_set_json, parameters={}):
+        missing_parameters = [
+            parameter_name
+            for parameter_name in data_set_json["properties"].get("parameters", {})
+            if parameter_name not in parameters
+        ]
+        if missing_parameters:
+            raise Exception(f"Missing parameters when accessing dataset "
+                            f"{data_set_json['name']}: {missing_parameters}")
+        return {
+            "referenceName": data_set_json["name"],
+            "type": "DatasetReference",
+            "parameters": parameters
+        }
+    
+    def list_target_files(self, container, path, account_name=None, policy_ovverride={}):
+        return {
+            "name": f"List {container}/{path} files".replace("/", "-"),
+            "type": "GetMetadata",
+            "dependsOn": [],
+            "policy": {**self.default_policy, **policy_ovverride},
+            "userProperties": [],
+            "typeProperties": {
+                "dataset": self.create_pipeline_dataset_reference(
+                    self.data_sets["target_folder"], {
+                        "Name": account_name or "@pipeline().globalParameters.StorageAccountName",
+                        "Container": container,
+                        "FolderPath": path
+                    })
+            },
+            "fieldList": [
+                "childItems"
+            ],
+            "storeSettings": {
+                "type": "AzureBlobFSReadSettings",
+                "recursive": True,
+                "enablePartitionDiscovery": False
+            },
+            "formatSettings": {
+                "type": "BinaryReadSettings"
+            }
+        }
+    
     @abstractmethod
     def generate_pipeline(self):
         ...

@@ -56,12 +56,12 @@ class ExampleConfigGenerations(unittest.TestCase):
         self.check_all_files_created_by_type(
             test_name, "linkedService", [
                 linked_service["name"] 
-                for _, linked_service in init_obj.all_linked_services.items()]
+                for _, linked_service in init_obj.all_linked_service_jsons.items()]
         )
         self.check_all_files_created_by_type(
             test_name, "dataset", [
                 data_set["name"]
-                for _, data_set in init_obj.all_data_sets.items()]
+                for _, data_set in init_obj.all_data_set_jsons.items()]
         )
         self.check_all_files_created_by_type(
             test_name, "pipeline", [
@@ -131,12 +131,12 @@ class ExampleConfigGenerations(unittest.TestCase):
         self.compare_files_by_type(
             test_name, "linkedService", {
                 linked_service["name"]: linked_service
-                for _, linked_service in init_obj.all_linked_services.items()}
+                for _, linked_service in init_obj.all_linked_service_jsons.items()}
         )
         self.compare_files_by_type(
             test_name, "dataset", {
                 data_set["name"]: data_set
-                for _, data_set in init_obj.all_data_sets.items()}
+                for _, data_set in init_obj.all_data_set_jsons.items()}
         )
         self.compare_files_by_type(
             test_name, "pipeline", {

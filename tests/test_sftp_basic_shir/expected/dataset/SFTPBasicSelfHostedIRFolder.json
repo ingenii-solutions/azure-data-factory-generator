@@ -1,8 +1,8 @@
 {
-    "name": "SFTPBasicKeyVaultFile",
+    "name": "SFTPBasicSelfHostedIRFolder",
     "properties": {
         "linkedServiceName": {
-            "referenceName": "SFTPBasicKeyVault",
+            "referenceName": "SFTPBasicSelfHostedIR",
             "type": "LinkedServiceReference",
             "parameters": {
                 "Host": {
@@ -28,9 +28,6 @@
                 "type": "string",
                 "defaultValue": "/"
             },
-            "FileName": {
-                "type": "string"
-            },
             "Host": {
                 "type": "String"
             },
@@ -49,10 +46,6 @@
         "typeProperties": {
             "location": {
                 "type": "SftpLocation",
-                "fileName": {
-                    "value": "@dataset().FileName",
-                    "type": "Expression"
-                },
                 "folderPath": {
                     "value": "@dataset().FolderPath",
                     "type": "Expression"

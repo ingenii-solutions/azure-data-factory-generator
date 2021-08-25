@@ -16,7 +16,7 @@
                 "userProperties": [],
                 "typeProperties": {
                     "dataset": {
-                        "referenceName": "SFTPBasicFolder",
+                        "referenceName": "SFTPBasicSelfHostedIRFolder",
                         "type": "DatasetReference",
                         "parameters": {
                             "Host": "test_host",
@@ -53,7 +53,7 @@
                 "userProperties": [],
                 "typeProperties": {
                     "dataset": {
-                        "referenceName": "DataLakeFolder",
+                        "referenceName": "DataLakeSelfHostedIRFolder",
                         "type": "DatasetReference",
                         "parameters": {
                             "Name": "@pipeline().globalParameters.StorageAccountName",
@@ -88,7 +88,7 @@
                 "userProperties": [],
                 "typeProperties": {
                     "dataset": {
-                        "referenceName": "DataLakeFolder",
+                        "referenceName": "DataLakeSelfHostedIRFolder",
                         "type": "DatasetReference",
                         "parameters": {
                             "Name": "@pipeline().globalParameters.StorageAccountName",
@@ -230,7 +230,7 @@
                                         },
                                         "inputs": [
                                             {
-                                                "referenceName": "SFTPBasicFile",
+                                                "referenceName": "SFTPBasicSelfHostedIRFile",
                                                 "type": "DatasetReference",
                                                 "parameters": {
                                                     "Host": "test_host",
@@ -247,7 +247,7 @@
                                         ],
                                         "outputs": [
                                             {
-                                                "referenceName": "DataLakeFolder",
+                                                "referenceName": "DataLakeSelfHostedIRFolder",
                                                 "type": "DatasetReference",
                                                 "parameters": {
                                                     "Name": "@pipeline().globalParameters.StorageAccountName",

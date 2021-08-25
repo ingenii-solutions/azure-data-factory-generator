@@ -1,4 +1,4 @@
-def get_data_lake_files(policy, data_set_name, container, path):
+def get_data_lake_files(policy, data_set_name, container, path, account_name=None):
     return {
         "name": f"List {container}/{path} files".replace("/", "-"),
         "type": "GetMetadata",
@@ -12,6 +12,7 @@ def get_data_lake_files(policy, data_set_name, container, path):
                 "parameters": {
                     "Container": container,
                     "FolderPath": path,
+                    "Name": account_name or "@pipeline().globalParameters.StorageAccountName"
                 }
             }
         },

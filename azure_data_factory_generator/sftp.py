@@ -48,17 +48,16 @@ class SFTPPipeline(DataFactoryPipeline):
             "policy": self.default_policy,
             "userProperties": [],
             "typeProperties": {
-                "dataset": {
-                    "referenceName": self.data_sets["source_folder"],
-                    "type": "DatasetReference",
-                    "parameters": {
+                "dataset": self.create_pipeline_dataset_reference(
+                    self.data_sets["source_folder"],
+                    {
                         "Host": self.config["host"],
                         "UserName": self.config["username"],
                         "KeyVaultName": self.config["key_vault_name"],
                         "KeyVaultSecretName": self.config["key_vault_secret_name"],
                         "FolderPath": self.table_definition["path"]
                     }
-                },
+                ),
                 "fieldList": [
                     "childItems"
                 ],
@@ -132,10 +131,9 @@ class SFTPPipeline(DataFactoryPipeline):
                                         "enableStaging": False
                                     },
                                     "inputs": [
-                                        {
-                                            "referenceName": self.data_sets["source_file"],
-                                            "type": "DatasetReference",
-                                            "parameters": {
+                                        self.create_pipeline_dataset_reference(
+                                            self.data_sets["source_file"],
+                                            {
                                                 "Host": self.config["host"],
                                                 "UserName": self.config["username"],
                                                 "KeyVaultName": self.config["key_vault_name"],
@@ -144,19 +142,19 @@ class SFTPPipeline(DataFactoryPipeline):
                                                 "FileName": {
                                                     "value": "@item().name",
                                                     "type": "Expression"
-                                                },
+                                                }
                                             }
-                                        }
+                                        )
                                     ],
                                     "outputs": [
-                                        {
-                                            "referenceName": self.data_sets["target_folder"],
-                                            "type": "DatasetReference",
-                                            "parameters": {
+                                        self.create_pipeline_dataset_reference(
+                                            self.data_sets["target_folder"],
+                                            {
+                                                "Name": "@pipeline().globalParameters.StorageAccountName",
                                                 "Container": "raw",
                                                 "FolderPath": self.data_lake_path
                                             }
-                                        }
+                                        )
                                     ]
                                 }
                             ]
@@ -175,11 +173,9 @@ class SFTPPipeline(DataFactoryPipeline):
         
         # --
 
-        find_all_raw_files = get_data_lake_files(
-            self.default_policy, self.data_sets["target_folder"], 
+        find_all_raw_files = self.list_target_files(
             "raw", self.data_lake_path)
-        find_all_archive_files = get_data_lake_files(
-            self.default_policy, self.data_sets["target_folder"], 
+        find_all_archive_files = self.list_target_files(
             "archive", self.data_lake_path)
 
         self.add_activity(find_all_raw_files)

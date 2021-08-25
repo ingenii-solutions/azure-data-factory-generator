@@ -154,6 +154,11 @@ class CreateDataFactoryObjects:
                 ds_name = data_set_json["name"]
                 if ds_name.lower().startswith(linked_service_json["name"].lower()):
                     ds_name = ds_name[len(linked_service_json["name"]):]
+
+                prefix = 0
+                while ds_name[:prefix + 1] == linked_service_json["name"][:prefix + 1]:
+                    prefix += 1
+                ds_name = ds_name[prefix:]
                 
                 data_set_json["name"] = linked_service_json["name"] + ds_name
 
