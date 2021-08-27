@@ -100,7 +100,10 @@ class SFTPPipeline(DataFactoryPipeline):
                         "userProperties": [],
                         "typeProperties": {
                             "expression": {
-                                "value": f"@not(or(contains(activity('{self.known_file_activities[0]['name']}').output.childItems, item()), contains(activity('{self.known_file_activities[1]['name']}').output.childItems, item())))",
+                                "value": f"@not(contains(createArray(" + ", ".join([
+                                    "contains(activity('" + activity["name"] + "').output.childItems, item())"
+                                    for activity in self.known_file_activities
+                                ]) + "), true))",
                                 "type": "Expression"
                             },
                             "ifTrueActivities": [
@@ -177,19 +180,24 @@ class SFTPPipeline(DataFactoryPipeline):
             "raw", self.data_lake_path)
         find_all_archive_files = self.list_target_files(
             "archive", self.data_lake_path)
+        find_all_preprocessed_files = self.list_target_files(
+            "archive", self.data_lake_path + "/before_pre_processing")
 
         self.add_activity(find_all_raw_files)
         self.add_activity(find_all_archive_files)
+        self.add_activity(find_all_preprocessed_files)
 
         # --
 
         find_raw_files = filter_for_files(find_all_raw_files)
         find_archive_files = filter_for_files(find_all_archive_files)
+        find_preprocessed_files = filter_for_files(find_all_preprocessed_files)
 
         self.add_activity(find_raw_files, depends_on=[find_all_raw_files])
         self.add_activity(find_archive_files, depends_on=[find_all_archive_files])
+        self.add_activity(find_preprocessed_files, depends_on=[find_all_preprocessed_files])
 
-        self.known_file_activities = [find_raw_files, find_archive_files] 
+        self.known_file_activities = [find_raw_files, find_archive_files, find_preprocessed_files] 
 
         # --
 
