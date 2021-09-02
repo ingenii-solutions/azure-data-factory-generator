@@ -14,12 +14,16 @@ sftp_basic_key_vault = {
 			},
 			"UserName": {
 				"type": "String"
-			}
+			},
+			"Port": {
+				"type": "Int",
+				"defaultValue": 22
+			},
 		},
 		"annotations": [],
 		"typeProperties": {
 			"host": "@{linkedService().Host}",
-			"port": 22,
+			"port": "@linkedService().Port",
 			"skipHostKeyValidation": True,
 			"authenticationType": "Basic",
 			"userName": "@{linkedService().UserName}",

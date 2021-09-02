@@ -1,4 +1,3 @@
-from .activities.data_lake import get_data_lake_files
 from .activities.generic import filter_for_files
 from .base import DataFactoryPipeline
 from .templates.linked_service.data_lake import data_lake
@@ -28,6 +27,8 @@ class SFTPPipeline(DataFactoryPipeline):
     # TODO: implement prefix and suffix checks
     #optional_table_parameters = ["zipped", "prefix", "suffix"]
 
+    default_config = {"key_vault_name": "Credential Store"}
+
     def __init__(self, data_provider, authentication, 
                  config, table_definition, data_sets):
         self.data_provider = data_provider
@@ -37,6 +38,18 @@ class SFTPPipeline(DataFactoryPipeline):
         self.data_sets = data_sets
 
         self.data_lake_path = self.data_provider + "/" + self.table_definition["name"]
+
+        self.sftp_parameters = {
+            **self.default_config,
+            "Host": self.config["host"],
+            "UserName": self.config["username"],
+            "KeyVaultSecretName": self.config["key_vault_secret_name"],
+            "FolderPath": self.table_definition["path"]
+        }
+        if self.config.get("key_vault_name"):
+            self.sftp_parameters["KeyVaultName"] = self.config["key_vault_name"]
+        if self.config.get("custom_port"):
+            self.sftp_parameters["Port"] = self.config["custom_port"]
 
         super(SFTPPipeline, self).__init__(self.data_lake_path.replace("/", "-"))        
 
@@ -49,15 +62,7 @@ class SFTPPipeline(DataFactoryPipeline):
             "userProperties": [],
             "typeProperties": {
                 "dataset": self.create_pipeline_dataset_reference(
-                    self.data_sets["source_folder"],
-                    {
-                        "Host": self.config["host"],
-                        "UserName": self.config["username"],
-                        "KeyVaultName": self.config["key_vault_name"],
-                        "KeyVaultSecretName": self.config["key_vault_secret_name"],
-                        "FolderPath": self.table_definition["path"]
-                    }
-                ),
+                    self.data_sets["source_folder"], self.sftp_parameters),
                 "fieldList": [
                     "childItems"
                 ],
@@ -137,11 +142,7 @@ class SFTPPipeline(DataFactoryPipeline):
                                         self.create_pipeline_dataset_reference(
                                             self.data_sets["source_file"],
                                             {
-                                                "Host": self.config["host"],
-                                                "UserName": self.config["username"],
-                                                "KeyVaultName": self.config["key_vault_name"],
-                                                "KeyVaultSecretName": self.config["key_vault_secret_name"],
-                                                "FolderPath": self.table_definition["path"],
+                                                **self.sftp_parameters,
                                                 "FileName": {
                                                     "value": "@item().name",
                                                     "type": "Expression"

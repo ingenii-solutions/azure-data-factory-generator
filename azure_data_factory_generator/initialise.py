@@ -237,15 +237,15 @@ class CreateDataFactoryObjects:
         for _, linked_service_json in self.all_linked_service_jsons.items():
             self.write_json(
                 f"{self.linked_service_folder}/{linked_service_json['name']}.json",
-                linked_service_json
+                linked_service_json["properties"]
             )
         for _, data_set_json in self.all_data_set_jsons.items():
             self.write_json(
                 f"{self.data_set_folder}/{data_set_json['name']}.json",
-                data_set_json
+                data_set_json["properties"]
             )
         for _, pipeline_json in self.all_pipelines.items():
             self.write_json(
                 f"{self.pipeline_folder}/{pipeline_json['name']}.json",
-                pipeline_json
+                pipeline_json["properties"]
             )

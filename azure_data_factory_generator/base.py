@@ -91,7 +91,9 @@ class DataFactoryPipeline(ABC):
         missing_parameters = [
             parameter_name
             for parameter_name in data_set_json["properties"].get("parameters", {})
-            if parameter_name not in parameters
+            if parameter_name not in parameters 
+                and data_set_json["properties"].get("parameters", {})[parameter_name]
+                                               .get("defaultValue") is None
         ]
         if missing_parameters:
             raise Exception(f"Missing parameters when accessing dataset "
