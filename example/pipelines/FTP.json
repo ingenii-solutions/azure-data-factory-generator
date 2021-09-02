@@ -1,0 +1,38 @@
+{
+    "name": "FTP",
+    "properties": {
+        "activities": [
+            {
+                "name": "List files",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.00:01:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "FTPBinary",
+                        "type": "DatasetReference"
+                    },
+                    "fieldList": [
+                        "childItems"
+                    ],
+                    "storeSettings": {
+                        "type": "FtpReadSettings",
+                        "enablePartitionDiscovery": false,
+                        "useBinaryTransfer": false
+                    },
+                    "formatSettings": {
+                        "type": "BinaryReadSettings"
+                    }
+                }
+            }
+        ],
+        "annotations": []
+    }
+}
