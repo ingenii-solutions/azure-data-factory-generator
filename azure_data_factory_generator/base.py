@@ -24,12 +24,16 @@ class DataFactoryPipeline(ABC):
         "secureOutput": False,
         "secureInput": False
     }
+    default_config = {
+        "key_vault_name": "Credential Store"
+    }
 
     data_provider = None
     authentication = None
     config = {}
     table_definition = {}
     data_sets = {}
+    source_store_settings = {}
 
     @classmethod
     def is_valid_authentication(cls, authentication_method: str) -> bool:
@@ -64,16 +68,18 @@ class DataFactoryPipeline(ABC):
         if errors:
             raise Exception(errors)
 
-    def __init__(self, name):
+    def __init__(self, name, properties={}):
         self.pipeline_json = {
             "name": name,
             "properties": {
-                "activities": [],
-                "parameters": {},
-                "variables": {},
-                "annotations": []
+                properties.get("activities", []),
+                properties.get("parameters", {}),
+                properties.get("variables", {}),
+                properties.get("annotations", [])
             }
         }
+        if not self.source_store_settings:
+            raise Exception(f"source_store_settings not set for data type {self.name}!")
 
     def add_activity(self, activity_json, depends_on=[]):
         self.pipeline_json["properties"]["activities"].append({

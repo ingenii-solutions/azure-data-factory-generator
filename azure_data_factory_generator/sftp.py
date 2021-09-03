@@ -1,23 +1,15 @@
 from .activities.generic import filter_for_files
 from .base import DataFactoryPipeline
 from .templates.linked_service.data_lake import data_lake
+from .templates.linked_service.ftp import ftp_basic_key_vault
 from .templates.linked_service.sftp import sftp_basic_key_vault
 from .templates.dataset.data_lake import data_lake_folder
+from .templates.dataset.ftp import ftp_folder, ftp_file
 from .templates.dataset.sftp import sftp_folder, sftp_file
 
-class SFTPPipeline(DataFactoryPipeline):
 
-    name = "sftp"
-    authentications = {
-        "basic": {
-            "required_config" : ["host", "username", "key_vault_name", "key_vault_secret"],
-            "linked_service": sftp_basic_key_vault
-        }
-    }
-    source_data_sets = {
-        "source_folder": sftp_folder, 
-        "source_file" : sftp_file
-    }
+class FTPBasePipeline(DataFactoryPipeline):
+
     target_linked_service = data_lake
     target_data_sets = {
         "target_folder": data_lake_folder
@@ -27,9 +19,7 @@ class SFTPPipeline(DataFactoryPipeline):
     # TODO: implement prefix and suffix checks
     #optional_table_parameters = ["zipped", "prefix", "suffix"]
 
-    default_config = {"key_vault_name": "Credential Store"}
-
-    def __init__(self, data_provider, authentication, 
+    def __init__(self, data_provider, authentication,
                  config, table_definition, data_sets):
         self.data_provider = data_provider
         self.authentication = authentication
@@ -37,9 +27,12 @@ class SFTPPipeline(DataFactoryPipeline):
         self.table_definition = table_definition
         self.data_sets = data_sets
 
-        self.data_lake_path = self.data_provider + "/" + self.table_definition["name"]
+        self.table_storage_partition_key = f"{data_provider}-{table_definition['name']}"
 
-        self.sftp_parameters = {
+        self.data_lake_path = self.data_provider + \
+            "/" + self.table_definition["name"]
+
+        self.source_parameters = {
             **self.default_config,
             "Host": self.config["host"],
             "UserName": self.config["username"],
@@ -47,13 +40,22 @@ class SFTPPipeline(DataFactoryPipeline):
             "FolderPath": self.table_definition["path"]
         }
         if self.config.get("key_vault_name"):
-            self.sftp_parameters["KeyVaultName"] = self.config["key_vault_name"]
+            self.source_parameters["KeyVaultName"] = self.config["key_vault_name"]
         if self.config.get("custom_port"):
-            self.sftp_parameters["Port"] = self.config["custom_port"]
+            self.source_parameters["Port"] = self.config["custom_port"]
 
-        super(SFTPPipeline, self).__init__(self.data_lake_path.replace("/", "-"))        
+        super(FTPBasePipeline, self).__init__(
+            self.data_lake_path.replace("/", "-"),
+            properties={
+                "variables": {
+                    "KnownFiles": {
+                        "type": "Array"
+                    }
+                }
+            }
+        )
 
-    def list_sftp_files(self):
+    def list_source_files(self):
         return {
             "name": f"List files at {self.table_definition['path']}".replace("/", "-"),
             "type": "GetMetadata",
@@ -62,7 +64,7 @@ class SFTPPipeline(DataFactoryPipeline):
             "userProperties": [],
             "typeProperties": {
                 "dataset": self.create_pipeline_dataset_reference(
-                    self.data_sets["source_folder"], self.sftp_parameters),
+                    self.data_sets["source_folder"], self.source_parameters),
                 "fieldList": [
                     "childItems"
                 ],
@@ -77,92 +79,207 @@ class SFTPPipeline(DataFactoryPipeline):
             }
         }
 
-
-    def move_new_files(self):
+    def list_known_files(self):
         return {
-            "name": "For each found file",
+            "name": "Get known files",
+            "type": "Lookup",
+            "dependsOn": [],
+            "policy": self.default_policy,
+            "userProperties": [],
+            "typeProperties": {
+                    "source": {
+                        "type": "AzureTableSource",
+                        "azureTableSourceQuery": {
+                            "value": f"PartitionKey eq '{self.table_storage_partition_key}'",
+                            "type": "Expression"
+                        },
+                        "azureTableSourceIgnoreTableNotFound": True
+                    },
+                "dataset": {
+                        "referenceName": "ConfigTable",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "TableName": "KnownFiles"
+                        }
+                },
+                "firstRowOnly": False
+            }
+        }
+
+    def generate_known_files_array(self, known_files_activity):
+        return {
+            "name": "Each known file",
             "type": "ForEach",
-            "dependsOn": [
-                {
-                    "activity": activity["name"],
-                    "dependencyConditions": [
-                        "Succeeded"
-                    ]
-                }
-                for activity in [self.source_files] + self.known_file_activities
-            ],
             "userProperties": [],
             "typeProperties": {
                 "items": {
-                    "value": f"@activity('{self.source_files['name']}').output.childItems",
+                    "value": f"@activity('{known_files_activity['name']}').output.value",
                     "type": "Expression"
                 },
                 "activities": [
                     {
-                        "name": "If new file",
-                        "type": "IfCondition",
+                        "name": "Add file name",
+                        "type": "AppendVariable",
                         "dependsOn": [],
                         "userProperties": [],
                         "typeProperties": {
-                            "expression": {
-                                "value": f"@not(contains(createArray(" + ", ".join([
-                                    "contains(activity('" + activity["name"] + "').output.childItems, item())"
-                                    for activity in self.known_file_activities
-                                ]) + "), true))",
+                            "variableName": "KnownFiles",
+                            "value": {
+                                "value": "@item().RowKey",
                                 "type": "Expression"
-                            },
-                            "ifTrueActivities": [
-                                {
-                                    "name": "Move file to raw",
-                                    "type": "Copy",
-                                    "dependsOn": [],
-                                    "policy": self.default_policy,
-                                    "userProperties": [],
-                                    "typeProperties": {
-                                        "source": {
-                                            "type": "BinarySource",
-                                            "storeSettings": {
-                                                "type": "SftpReadSettings",
-                                                "recursive": False,
-                                                "deleteFilesAfterCompletion": False
-                                            },
-                                            "formatSettings": {
-                                                "type": "BinaryReadSettings"
-                                            }
-                                        },
-                                        "sink": {
-                                            "type": "BinarySink",
-                                            "storeSettings": {
-                                                "type": "AzureBlobFSWriteSettings"
-                                            }
-                                        },
-                                        "enableStaging": False
-                                    },
-                                    "inputs": [
-                                        self.create_pipeline_dataset_reference(
-                                            self.data_sets["source_file"],
-                                            {
-                                                **self.sftp_parameters,
-                                                "FileName": {
-                                                    "value": "@item().name",
-                                                    "type": "Expression"
-                                                }
-                                            }
-                                        )
-                                    ],
-                                    "outputs": [
-                                        self.create_pipeline_dataset_reference(
-                                            self.data_sets["target_folder"],
-                                            {
-                                                "Name": "@pipeline().globalParameters.StorageAccountName",
-                                                "Container": "raw",
-                                                "FolderPath": self.data_lake_path
-                                            }
-                                        )
-                                    ]
-                                }
-                            ]
+                            }
                         }
+                    }
+                ]
+            }
+        }
+
+    def filter_new_files(self):
+        return {
+            "name": "Find new files",
+            "type": "Filter",
+            "userProperties": [],
+            "typeProperties": {
+                "items": {
+                    "value": "@variables('FileNames')",
+                    "type": "Expression"
+                },
+                "condition": {
+                    "value": "@not(contains(variables('KnownFiles'), item()))",
+                    "type": "Expression"
+                }
+            }
+        }
+
+    def move_new_files(self, new_files_activity):
+        return {
+            "name": "For each new file",
+            "type": "ForEach",
+            "userProperties": [],
+            "typeProperties": {
+                "items": {
+                    "value": f"@activity('{new_files_activity['name']}').output.value",
+                    "type": "Expression"
+                },
+                "activities": [
+                    {
+                        "name": "Move file",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": self.default_policy,
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "BinarySource",
+                                "storeSettings": self.source_store_settings,
+                                "formatSettings": {
+                                    "type": "BinaryReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "BinarySink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                }
+                            },
+                            "enableStaging": False
+                        },
+                        "inputs": [
+                            self.create_pipeline_dataset_reference(
+                                self.data_sets["source_file"],
+                                {
+                                    **self.source_parameters,
+                                    "FileName": {
+                                        "value": "@item().name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            )
+                        ],
+                        "outputs": [
+                            self.create_pipeline_dataset_reference(
+                                self.data_sets["target_folder"],
+                                {
+                                    "Name": "@pipeline().globalParameters.StorageAccountName",
+                                    "Container": "raw",
+                                    "FolderPath": self.data_lake_path
+                                }
+                            )
+                        ]
+                    },
+                    {
+                        "name": "Create new known file entry",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "Move file",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": self.default_policy,
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureTableSource",
+                                "additionalColumns": [
+                                    {
+                                        "name": "Row",
+                                        "value": {
+                                            "value": "@item()",
+                                            "type": "Expression"
+                                        }
+                                    },
+                                    {
+                                        "name": "DateMoved",
+                                        "value": {
+                                            "value": "@utcnow()",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                ],
+                                "azureTableSourceQuery": {
+                                    "value": "PartitionKey eq '1'",
+                                    "type": "Expression"
+                                },
+                                "azureTableSourceIgnoreTableNotFound": False
+                            },
+                            "sink": {
+                                "type": "AzureTableSink",
+                                "azureTableInsertType": "merge",
+                                "azureTableDefaultPartitionKeyValue": {
+                                    "value": "@variables('PartitionKey')",
+                                    "type": "Expression"
+                                },
+                                "azureTableRowKeyName": {
+                                    "value": "Row",
+                                    "type": "Expression"
+                                },
+                                "writeBatchSize": 10000
+                            },
+                            "enableStaging": False,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": True,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": True,
+                                    "treatBooleanAsNumber": False
+                                }
+                            }
+                        },
+                        "inputs": [
+                            self.create_pipeline_dataset_reference(
+                                self.data_sets["config_table"],
+                                parameters={"TableName": "Select1"}
+                            )
+                        ],
+                        "outputs": [
+                            self.create_pipeline_dataset_reference(
+                                self.data_sets["config_table"],
+                                parameters={"TableName": "KnownFiles"}
+                            )
+                        ]
                     }
                 ]
             }
@@ -172,35 +289,78 @@ class SFTPPipeline(DataFactoryPipeline):
 
         # --
 
-        self.source_files = self.list_sftp_files()
-        self.add_activity(self.source_files)
-        
-        # --
+        find_known_files_raw = self.list_known_files()
+        self.add_activity(find_known_files_raw)
 
-        find_all_raw_files = self.list_target_files(
-            "raw", self.data_lake_path)
-        find_all_archive_files = self.list_target_files(
-            "archive", self.data_lake_path)
-        find_all_preprocessed_files = self.list_target_files(
-            "archive", self.data_lake_path + "/before_pre_processing")
-
-        self.add_activity(find_all_raw_files)
-        self.add_activity(find_all_archive_files)
-        self.add_activity(find_all_preprocessed_files)
+        known_files_array = self.generate_known_files_array(
+            find_known_files_raw)
+        self.add_activity(known_files_array, depends_on=[find_known_files_raw])
 
         # --
 
-        find_raw_files = filter_for_files(find_all_raw_files)
-        find_archive_files = filter_for_files(find_all_archive_files)
-        find_preprocessed_files = filter_for_files(find_all_preprocessed_files)
+        source_files = self.list_source_files()
+        self.add_activity(source_files)
 
-        self.add_activity(find_raw_files, depends_on=[find_all_raw_files])
-        self.add_activity(find_archive_files, depends_on=[find_all_archive_files])
-        self.add_activity(find_preprocessed_files, depends_on=[find_all_preprocessed_files])
-
-        self.known_file_activities = [find_raw_files, find_archive_files, find_preprocessed_files] 
+        only_new_files = self.filter_new_files(known_files_array, source_files)
+        self.add_activity(only_new_files, depends_on=[
+                          known_files_array, source_files])
 
         # --
 
         move_files = self.move_new_files()
-        self.add_activity(move_files, depends_on=[self.source_files] + self.known_file_activities)
+        self.add_activity(move_files, depends_on=[only_new_files])
+
+
+class FTPPipeline(FTPBasePipeline):
+
+    name = "ftp"
+    authentications = {
+        "basic": {
+            "required_config": ["host", "username", "key_vault_name", "key_vault_secret"],
+            "linked_service": ftp_basic_key_vault
+        }
+    }
+    source_data_sets = {
+        "source_folder": ftp_folder,
+        "source_file": ftp_file
+    }
+
+    source_store_settings = {
+        "type": "FtpReadSettings",
+        "recursive": False,
+        "useBinaryTransfer": True,
+        "deleteFilesAfterCompletion": False
+    }
+
+    def __init__(self, data_provider, authentication,
+                 config, table_definition, data_sets):
+        super(FTPPipeline, self).__init__(
+            data_provider, authentication,
+            config, table_definition, data_sets)
+
+
+class SFTPPipeline(FTPBasePipeline):
+
+    name = "sftp"
+    authentications = {
+        "basic": {
+            "required_config": ["host", "username", "key_vault_name", "key_vault_secret"],
+            "linked_service": sftp_basic_key_vault
+        }
+    }
+    source_data_sets = {
+        "source_folder": sftp_folder,
+        "source_file": sftp_file
+    }
+
+    source_store_settings = {
+        "type": "SftpReadSettings",
+        "recursive": False,
+        "deleteFilesAfterCompletion": False
+    }
+
+    def __init__(self, data_provider, authentication,
+                 config, table_definition, data_sets):
+        super(SFTPPipeline, self).__init__(
+            data_provider, authentication,
+            config, table_definition, data_sets)
