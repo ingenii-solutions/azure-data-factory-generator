@@ -2,18 +2,16 @@ from copy import deepcopy
 import json
 from os import listdir, makedirs, path
 
-from .sftp import SFTPPipeline
+from .sftp import FTPPipeline, SFTPPipeline
 from .templates.dataset import all_data_sets
 from .templates.linked_service import all_linked_services
 
 class CreateDataFactoryObjects:
 
     connection_types = {
+        "ftp": FTPPipeline,
         "sftp": SFTPPipeline
     }
-
-    all_source_connections = set()
-    all_target_connections = set()
 
     all_linked_services = set()
     all_data_sets = set()
@@ -78,30 +76,30 @@ class CreateDataFactoryObjects:
 
         if not self.all_linked_services:
             for config in self.get_configs():
-                conn = config["connection"]
+                conn = self.connection_types[config["connection"]]
                 auth = config["authentication"]
                 ir_name = config.get(
                     "self_hosted_integration_runtime", 
                     self.base_integration_runtime)
                 
-                source_ls = \
-                    self.connection_types[conn] \
-                        .authentications[auth]["linked_service"]["name"]
-                self.all_linked_services.add(
-                    (source_ls, ir_name))
+                source_ls = conn.authentications[auth]["linked_service"]["name"]
+                self.all_linked_services.add((source_ls, ir_name))
 
-                for _, source_dataset in self.connection_types[conn].source_data_sets.items():
-                    self.all_data_sets.add(
-                        (source_ls, ir_name, source_dataset["name"]))
+                for _, source_dataset in conn.source_data_sets.items():
+                    self.all_data_sets.add((source_ls, ir_name, source_dataset["name"]))
                 
-                target_ls = \
-                    self.connection_types[conn].target_linked_service["name"]
-                self.all_linked_services.add(
-                    (target_ls, ir_name))
+                target_ls = conn.target_linked_service["name"]
+                self.all_linked_services.add((target_ls, ir_name))
 
-                for _, target_dataset in self.connection_types[conn].target_data_sets.items():
-                    self.all_data_sets.add(
-                        (target_ls, ir_name, target_dataset["name"]))
+                for _, target_dataset in conn.target_data_sets.items():
+                    self.all_data_sets.add((target_ls, ir_name, target_dataset["name"]))
+                
+                if conn.config_linked_service:
+                    config_ls = conn.config_linked_service["name"]
+                    self.all_linked_services.add((config_ls, ir_name))
+
+                    for _, config_dataset in conn.config_data_sets.items():
+                        self.all_data_sets.add((config_ls, ir_name, config_dataset["name"]))
                 
         # Validation of configs
 
@@ -162,6 +160,8 @@ class CreateDataFactoryObjects:
                 
                 data_set_json["name"] = linked_service_json["name"] + ds_name
 
+                parameters = linked_service_json["properties"].get("parameters", {})
+
                 # Add linked service definition, including required parameters
                 data_set_json["properties"]["linkedServiceName"] = {
                     "referenceName": linked_service_json["name"],
@@ -171,11 +171,11 @@ class CreateDataFactoryObjects:
                             "value": f"@dataset().{param}",
                             "type": "Expression"
                         }
-                        for param in linked_service_json["properties"]["parameters"]
+                        for param in parameters
                     }
                 }
                 # Add linked service parameters to data set parameters
-                for param, val in linked_service_json["properties"]["parameters"].items():
+                for param, val in parameters.items():
                     data_set_json["properties"]["parameters"][param] = val
                 
                 self.all_data_set_jsons[ds_id] = data_set_json
@@ -207,6 +207,14 @@ class CreateDataFactoryObjects:
                 }
             }
 
+            if pipeline_class.config_linked_service:
+                config_linked_service_name = self.create_linked_service_name(
+                    pipeline_class.config_linked_service["name"], ir_name)
+                pipeline_datasets.update({
+                    data_set_id: self.all_data_set_jsons[(config_linked_service_name, data_set_template["name"])]
+                    for data_set_id, data_set_template in pipeline_class.config_data_sets.items()
+                })
+
             for table_definition in config["tables"]:
                 pipeline_obj = pipeline_class(
                     config["name"], config["authentication"], 
@@ -237,15 +245,15 @@ class CreateDataFactoryObjects:
         for _, linked_service_json in self.all_linked_service_jsons.items():
             self.write_json(
                 f"{self.linked_service_folder}/{linked_service_json['name']}.json",
-                linked_service_json["properties"]
+                linked_service_json
             )
         for _, data_set_json in self.all_data_set_jsons.items():
             self.write_json(
                 f"{self.data_set_folder}/{data_set_json['name']}.json",
-                data_set_json["properties"]
+                data_set_json
             )
         for _, pipeline_json in self.all_pipelines.items():
             self.write_json(
                 f"{self.pipeline_folder}/{pipeline_json['name']}.json",
-                pipeline_json["properties"]
+                pipeline_json
             )

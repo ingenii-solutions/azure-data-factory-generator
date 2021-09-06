@@ -35,6 +35,13 @@ class DataFactoryPipeline(ABC):
     data_sets = {}
     source_store_settings = {}
 
+    authentications = {}
+    source_data_sets = {}
+    target_linked_service = None
+    target_data_sets = {}
+    config_linked_service = None
+    config_data_sets = {}
+
     @classmethod
     def is_valid_authentication(cls, authentication_method: str) -> bool:
         return authentication_method in cls.authentications
@@ -68,14 +75,16 @@ class DataFactoryPipeline(ABC):
         if errors:
             raise Exception(errors)
 
-    def __init__(self, name, properties={}):
+    def __init__(self, name,
+                 activities=[], parameters={},
+                 variables={}, annotations=[]):
         self.pipeline_json = {
             "name": name,
             "properties": {
-                properties.get("activities", []),
-                properties.get("parameters", {}),
-                properties.get("variables", {}),
-                properties.get("annotations", [])
+                "activities": activities,
+                "parameters": parameters,
+                "variables": variables,
+                "annotations": annotations
             }
         }
         if not self.source_store_settings:

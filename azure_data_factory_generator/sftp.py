@@ -1,8 +1,10 @@
 from .activities.generic import filter_for_files
 from .base import DataFactoryPipeline
+from .templates.linked_service.config_table_storage import config_table_storage
 from .templates.linked_service.data_lake import data_lake
 from .templates.linked_service.ftp import ftp_basic_key_vault
 from .templates.linked_service.sftp import sftp_basic_key_vault
+from .templates.dataset.config_table import config_table
 from .templates.dataset.data_lake import data_lake_folder
 from .templates.dataset.ftp import ftp_folder, ftp_file
 from .templates.dataset.sftp import sftp_folder, sftp_file
@@ -13,6 +15,11 @@ class FTPBasePipeline(DataFactoryPipeline):
     target_linked_service = data_lake
     target_data_sets = {
         "target_folder": data_lake_folder
+    }
+
+    config_linked_service = config_table_storage
+    config_data_sets = {
+        "config_table": config_table
     }
 
     required_table_parameters = ["name", "path"]
@@ -46,11 +53,9 @@ class FTPBasePipeline(DataFactoryPipeline):
 
         super(FTPBasePipeline, self).__init__(
             self.data_lake_path.replace("/", "-"),
-            properties={
-                "variables": {
-                    "KnownFiles": {
-                        "type": "Array"
-                    }
+            variables={
+                "KnownFiles": {
+                    "type": "Array"
                 }
             }
         )
@@ -301,13 +306,13 @@ class FTPBasePipeline(DataFactoryPipeline):
         source_files = self.list_source_files()
         self.add_activity(source_files)
 
-        only_new_files = self.filter_new_files(known_files_array, source_files)
+        only_new_files = self.filter_new_files()
         self.add_activity(only_new_files, depends_on=[
                           known_files_array, source_files])
 
         # --
 
-        move_files = self.move_new_files()
+        move_files = self.move_new_files(only_new_files)
         self.add_activity(move_files, depends_on=[only_new_files])
 
 
