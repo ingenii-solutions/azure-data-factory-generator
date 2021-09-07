@@ -1,5 +1,5 @@
 config_table_storage = {
-    "name": "AzureConfigTableStorage",
+    "name": "ConfigTableStorage",
     "type": "Microsoft.DataFactory/factories/linkedservices",
     "properties": {
         "annotations": [],

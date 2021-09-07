@@ -1,10 +1,12 @@
 from copy import deepcopy
 import json
 from os import listdir, makedirs, path
+from re import sub
 
 from .sftp import FTPPipeline, SFTPPipeline
 from .templates.dataset import all_data_sets
 from .templates.linked_service import all_linked_services
+
 
 class CreateDataFactoryObjects:
 
@@ -40,9 +42,11 @@ class CreateDataFactoryObjects:
 
     def check_folders(self):
         for folder in [
+            self.shir_folder, self.linked_service_folder,
                 self.shir_folder, self.linked_service_folder, 
-                self.data_set_folder, self.pipeline_folder
-            ]:
+            self.shir_folder, self.linked_service_folder,
+            self.data_set_folder, self.pipeline_folder
+        ]:
             if not path.exists(folder):
                 makedirs(folder)
 
@@ -68,7 +72,7 @@ class CreateDataFactoryObjects:
                         "name": shir_name,
                         "properties": {
                             "type": "SelfHosted"
-                            }
+                        }
                     }
 
     def find_all_connections(self):
@@ -79,28 +83,31 @@ class CreateDataFactoryObjects:
                 conn = self.connection_types[config["connection"]]
                 auth = config["authentication"]
                 ir_name = config.get(
-                    "self_hosted_integration_runtime", 
+                    "self_hosted_integration_runtime",
                     self.base_integration_runtime)
-                
+
                 source_ls = conn.authentications[auth]["linked_service"]["name"]
                 self.all_linked_services.add((source_ls, ir_name))
 
                 for _, source_dataset in conn.source_data_sets.items():
-                    self.all_data_sets.add((source_ls, ir_name, source_dataset["name"]))
-                
+                    self.all_data_sets.add(
+                        (source_ls, ir_name, source_dataset["name"]))
+
                 target_ls = conn.target_linked_service["name"]
                 self.all_linked_services.add((target_ls, ir_name))
 
                 for _, target_dataset in conn.target_data_sets.items():
-                    self.all_data_sets.add((target_ls, ir_name, target_dataset["name"]))
-                
+                    self.all_data_sets.add(
+                        (target_ls, ir_name, target_dataset["name"]))
+
                 if conn.config_linked_service:
                     config_ls = conn.config_linked_service["name"]
                     self.all_linked_services.add((config_ls, ir_name))
 
                     for _, config_dataset in conn.config_data_sets.items():
-                        self.all_data_sets.add((config_ls, ir_name, config_dataset["name"]))
-                
+                        self.all_data_sets.add(
+                            (config_ls, ir_name, config_dataset["name"]))
+
         # Validation of configs
 
     def create_linked_service_name(self, base_name, integration_runtime_name):
@@ -115,13 +122,26 @@ class CreateDataFactoryObjects:
         else:
             new_linked_service = deepcopy(base_json)
             new_linked_service["name"] = \
-                self.create_linked_service_name(base_json["name"], 
+                self.create_linked_service_name(base_json["name"],
                                                 integration_runtime_name)
             new_linked_service["properties"]["connectVia"] = {
-			    "referenceName": integration_runtime_name,
-			    "type": "IntegrationRuntimeReference"
-		    }
+                "referenceName": integration_runtime_name,
+                "type": "IntegrationRuntimeReference"
+            }
             return new_linked_service
+    
+    def create_dataset_name(self, linked_service_json_name, data_set_template_name):
+
+        ds_name = data_set_template_name
+        if ds_name.lower().startswith(linked_service_json_name.lower()):
+            ds_name = ds_name[len(linked_service_json_name):]
+
+        prefix = 0
+        while ds_name[:prefix + 1] == linked_service_json_name[:prefix + 1]:
+            prefix += 1
+        ds_name = ds_name[prefix:]
+
+        return sub("[^0-9a-zA-Z_]+", "", linked_service_json_name + ds_name)
 
     def find_all_linked_services(self):
         # Find only the required linked services
@@ -130,8 +150,9 @@ class CreateDataFactoryObjects:
         for ls_name, ir_name in self.all_linked_services:
 
             template_linked_service = all_linked_services[ls_name]
-            
-            ls_json = self.create_linked_service(template_linked_service, ir_name)
+
+            ls_json = self.create_linked_service(
+                template_linked_service, ir_name)
             if ls_json["name"] not in self.all_linked_service_jsons:
                 self.all_linked_service_jsons[ls_json["name"]] = ls_json
 
@@ -139,9 +160,9 @@ class CreateDataFactoryObjects:
         for ls_name, ir_name, ds_name in self.all_data_sets:
 
             linked_service_json = self.all_linked_service_jsons[
-                    self.create_linked_service_name(
-                        ls_name, ir_name)
-                ]
+                self.create_linked_service_name(
+                    ls_name, ir_name)
+            ]
             data_set_template = all_data_sets[ds_name]
 
             ds_id = (linked_service_json["name"], data_set_template["name"])
@@ -149,18 +170,11 @@ class CreateDataFactoryObjects:
 
                 data_set_json = deepcopy(data_set_template)
 
-                ds_name = data_set_json["name"]
-                if ds_name.lower().startswith(linked_service_json["name"].lower()):
-                    ds_name = ds_name[len(linked_service_json["name"]):]
+                data_set_json["name"] = \
+                    self.create_dataset_name(linked_service_json["name"], ds_name)
 
-                prefix = 0
-                while ds_name[:prefix + 1] == linked_service_json["name"][:prefix + 1]:
-                    prefix += 1
-                ds_name = ds_name[prefix:]
-                
-                data_set_json["name"] = linked_service_json["name"] + ds_name
-
-                parameters = linked_service_json["properties"].get("parameters", {})
+                parameters = linked_service_json["properties"].get(
+                    "parameters", {})
 
                 # Add linked service definition, including required parameters
                 data_set_json["properties"]["linkedServiceName"] = {
@@ -177,7 +191,7 @@ class CreateDataFactoryObjects:
                 # Add linked service parameters to data set parameters
                 for param, val in parameters.items():
                     data_set_json["properties"]["parameters"][param] = val
-                
+
                 self.all_data_set_jsons[ds_id] = data_set_json
 
     def generate_pipelines(self):
@@ -186,7 +200,7 @@ class CreateDataFactoryObjects:
             conn = config["connection"]
             auth = config["authentication"]
             ir_name = config.get(
-                "self_hosted_integration_runtime", 
+                "self_hosted_integration_runtime",
                 self.base_integration_runtime)
 
             pipeline_class = self.connection_types[conn]
@@ -198,11 +212,13 @@ class CreateDataFactoryObjects:
 
             pipeline_datasets = {
                 **{
-                    data_set_id: self.all_data_set_jsons[(source_linked_service_name, data_set_template["name"])]
+                    data_set_id: self.all_data_set_jsons[(
+                        source_linked_service_name, data_set_template["name"])]
                     for data_set_id, data_set_template in pipeline_class.source_data_sets.items()
                 },
                 **{
-                    data_set_id: self.all_data_set_jsons[(target_linked_service_name, data_set_template["name"])]
+                    data_set_id: self.all_data_set_jsons[(
+                        target_linked_service_name, data_set_template["name"])]
                     for data_set_id, data_set_template in pipeline_class.target_data_sets.items()
                 }
             }
@@ -211,32 +227,33 @@ class CreateDataFactoryObjects:
                 config_linked_service_name = self.create_linked_service_name(
                     pipeline_class.config_linked_service["name"], ir_name)
                 pipeline_datasets.update({
-                    data_set_id: self.all_data_set_jsons[(config_linked_service_name, data_set_template["name"])]
+                    data_set_id: self.all_data_set_jsons[(
+                        config_linked_service_name, data_set_template["name"])]
                     for data_set_id, data_set_template in pipeline_class.config_data_sets.items()
                 })
 
             for table_definition in config["tables"]:
                 pipeline_obj = pipeline_class(
-                    config["name"], config["authentication"], 
+                    config["name"], config["authentication"],
                     config["config"], table_definition, pipeline_datasets
                 )
                 pipeline_obj.generate_pipeline()
                 self.all_pipelines[pipeline_obj.pipeline_json["name"]] = \
                     pipeline_obj.pipeline_json
-    
+
     def create_all_jsons(self):
         self.find_self_hosted_integration_runtimes()
         self.find_all_linked_services()
         self.find_all_data_sets()
         self.generate_pipelines()
-        
+
     def write_json(self, file_path, json_to_write):
         with open(file_path, "w") as json_file:
             json.dump(json_to_write, json_file, indent=4)
 
     def create_all(self):
         self.create_all_jsons()
-        
+
         for _, shir_json in self.all_self_hosted_integration_runtimes.items():
             self.write_json(
                 f"{self.shir_folder}/{shir_json['name']}.json",

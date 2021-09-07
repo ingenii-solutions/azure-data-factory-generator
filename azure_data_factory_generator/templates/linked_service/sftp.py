@@ -6,9 +6,6 @@ sftp_basic_key_vault = {
 			"Host": {
 				"type": "String"
 			},
-			"KeyVaultName": {
-				"type": "String"
-			},
 			"KeyVaultSecretName": {
 				"type": "String"
 			},
@@ -30,7 +27,7 @@ sftp_basic_key_vault = {
 			"password": {
 				"type": "AzureKeyVaultSecret",
 				"store": {
-					"referenceName": "@{linkedService().KeyVaultName}",
+					"referenceName": "Credentials Store",
 					"type": "LinkedServiceReference"
 				},
 				"secretName": "@{linkedService().KeyVaultSecretName}"

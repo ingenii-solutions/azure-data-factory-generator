@@ -12,7 +12,7 @@ def get_data_lake_files(policy, data_set_name, container, path, account_name=Non
                 "parameters": {
                     "Container": container,
                     "FolderPath": path,
-                    "Name": account_name or "@pipeline().globalParameters.StorageAccountName"
+                    "Name": account_name or "@pipeline().globalParameters.DataLakeName"
                 }
             }
         },

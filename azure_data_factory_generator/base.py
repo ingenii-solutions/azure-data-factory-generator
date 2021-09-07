@@ -24,9 +24,6 @@ class DataFactoryPipeline(ABC):
         "secureOutput": False,
         "secureInput": False
     }
-    default_config = {
-        "key_vault_name": "Credential Store"
-    }
 
     data_provider = None
     authentication = None
@@ -129,7 +126,7 @@ class DataFactoryPipeline(ABC):
             "typeProperties": {
                 "dataset": self.create_pipeline_dataset_reference(
                     self.data_sets["target_folder"], {
-                        "Name": account_name or "@pipeline().globalParameters.StorageAccountName",
+                        "Name": account_name or "@pipeline().globalParameters.DataLakeName",
                         "Container": container,
                         "FolderPath": path
                     })

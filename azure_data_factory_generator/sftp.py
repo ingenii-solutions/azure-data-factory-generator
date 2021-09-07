@@ -40,29 +40,33 @@ class FTPBasePipeline(DataFactoryPipeline):
             "/" + self.table_definition["name"]
 
         self.source_parameters = {
-            **self.default_config,
             "Host": self.config["host"],
             "UserName": self.config["username"],
             "KeyVaultSecretName": self.config["key_vault_secret_name"],
             "FolderPath": self.table_definition["path"]
         }
-        if self.config.get("key_vault_name"):
-            self.source_parameters["KeyVaultName"] = self.config["key_vault_name"]
         if self.config.get("custom_port"):
             self.source_parameters["Port"] = self.config["custom_port"]
 
         super(FTPBasePipeline, self).__init__(
             self.data_lake_path.replace("/", "-"),
             variables={
-                "KnownFiles": {
+                "SFTPKnownFiles": {
                     "type": "Array"
                 }
             }
         )
 
+    @staticmethod
+    def handle_path(path_str):
+        if path_str == "/":
+            return "root path"
+        else:
+            return path_str.replace("/", "-")
+
     def list_source_files(self):
         return {
-            "name": f"List files at {self.table_definition['path']}".replace("/", "-"),
+            "name": f"List files at {self.handle_path(self.table_definition['path'])}",
             "type": "GetMetadata",
             "dependsOn": [],
             "policy": self.default_policy,
@@ -92,20 +96,20 @@ class FTPBasePipeline(DataFactoryPipeline):
             "policy": self.default_policy,
             "userProperties": [],
             "typeProperties": {
-                    "source": {
-                        "type": "AzureTableSource",
-                        "azureTableSourceQuery": {
-                            "value": f"PartitionKey eq '{self.table_storage_partition_key}'",
-                            "type": "Expression"
-                        },
-                        "azureTableSourceIgnoreTableNotFound": True
+                "source": {
+                    "type": "AzureTableSource",
+                    "azureTableSourceQuery": {
+                        "value": f"PartitionKey eq '{self.table_storage_partition_key}'",
+                        "type": "Expression"
                     },
+                    "azureTableSourceIgnoreTableNotFound": True
+                },
                 "dataset": {
-                        "referenceName": "ConfigTable",
-                        "type": "DatasetReference",
-                        "parameters": {
-                            "TableName": "KnownFiles"
-                        }
+                    "referenceName": self.data_sets["config_table"]["name"],
+                    "type": "DatasetReference",
+                    "parameters": {
+                        "TableName": "SFTPKnownFiles"
+                    }
                 },
                 "firstRowOnly": False
             }
@@ -128,7 +132,7 @@ class FTPBasePipeline(DataFactoryPipeline):
                         "dependsOn": [],
                         "userProperties": [],
                         "typeProperties": {
-                            "variableName": "KnownFiles",
+                            "variableName": "SFTPKnownFiles",
                             "value": {
                                 "value": "@item().RowKey",
                                 "type": "Expression"
@@ -139,18 +143,18 @@ class FTPBasePipeline(DataFactoryPipeline):
             }
         }
 
-    def filter_new_files(self):
+    def filter_new_files(self, source_files_activity):
         return {
             "name": "Find new files",
             "type": "Filter",
             "userProperties": [],
             "typeProperties": {
                 "items": {
-                    "value": "@variables('FileNames')",
+                    "value": f"@activity('{source_files_activity['name']}').output.childItems",
                     "type": "Expression"
                 },
                 "condition": {
-                    "value": "@not(contains(variables('KnownFiles'), item()))",
+                    "value": "@not(contains(variables('SFTPKnownFiles'), item().name))",
                     "type": "Expression"
                 }
             }
@@ -205,7 +209,7 @@ class FTPBasePipeline(DataFactoryPipeline):
                             self.create_pipeline_dataset_reference(
                                 self.data_sets["target_folder"],
                                 {
-                                    "Name": "@pipeline().globalParameters.StorageAccountName",
+                                    "Name": "@pipeline().globalParameters.DataLakeName",
                                     "Container": "raw",
                                     "FolderPath": self.data_lake_path
                                 }
@@ -232,7 +236,7 @@ class FTPBasePipeline(DataFactoryPipeline):
                                     {
                                         "name": "Row",
                                         "value": {
-                                            "value": "@item()",
+                                            "value": "@item().name",
                                             "type": "Expression"
                                         }
                                     },
@@ -254,7 +258,7 @@ class FTPBasePipeline(DataFactoryPipeline):
                                 "type": "AzureTableSink",
                                 "azureTableInsertType": "merge",
                                 "azureTableDefaultPartitionKeyValue": {
-                                    "value": "@variables('PartitionKey')",
+                                    "value": self.table_storage_partition_key,
                                     "type": "Expression"
                                 },
                                 "azureTableRowKeyName": {
@@ -282,7 +286,7 @@ class FTPBasePipeline(DataFactoryPipeline):
                         "outputs": [
                             self.create_pipeline_dataset_reference(
                                 self.data_sets["config_table"],
-                                parameters={"TableName": "KnownFiles"}
+                                parameters={"TableName": "SFTPKnownFiles"}
                             )
                         ]
                     }
@@ -306,7 +310,7 @@ class FTPBasePipeline(DataFactoryPipeline):
         source_files = self.list_source_files()
         self.add_activity(source_files)
 
-        only_new_files = self.filter_new_files()
+        only_new_files = self.filter_new_files(source_files)
         self.add_activity(only_new_files, depends_on=[
                           known_files_array, source_files])
 
