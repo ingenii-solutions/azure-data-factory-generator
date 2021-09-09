@@ -1,5 +1,5 @@
 {
-    "name": "SelfHostedIR",
+    "name": "adp-self-hosted",
     "properties": {
         "type": "SelfHosted"
     }

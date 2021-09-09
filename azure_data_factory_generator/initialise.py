@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from copy import deepcopy
 import json
 from os import listdir, makedirs, path
@@ -23,6 +24,8 @@ class CreateDataFactoryObjects:
     all_linked_service_jsons = {}
     all_data_set_jsons = {}
     all_pipelines = {}
+    all_triggers = {}
+    all_trigger_jsons = {}
 
     source_data_sets_per_type = {}
     target_data_sets = {}
@@ -37,15 +40,15 @@ class CreateDataFactoryObjects:
         self.linked_service_folder = f"{self.generated_folder}/linkedService"
         self.data_set_folder = f"{self.generated_folder}/dataset"
         self.pipeline_folder = f"{self.generated_folder}/pipeline"
+        self.trigger_folder = f"{self.generated_folder}/trigger"
 
         self.check_folders()
 
     def check_folders(self):
         for folder in [
             self.shir_folder, self.linked_service_folder,
-                self.shir_folder, self.linked_service_folder, 
-            self.shir_folder, self.linked_service_folder,
-            self.data_set_folder, self.pipeline_folder
+            self.data_set_folder, self.pipeline_folder,
+            self.trigger_folder
         ]:
             if not path.exists(folder):
                 makedirs(folder)
@@ -129,7 +132,7 @@ class CreateDataFactoryObjects:
                 "type": "IntegrationRuntimeReference"
             }
             return new_linked_service
-    
+
     def create_dataset_name(self, linked_service_json_name, data_set_template_name):
 
         ds_name = data_set_template_name
@@ -171,7 +174,8 @@ class CreateDataFactoryObjects:
                 data_set_json = deepcopy(data_set_template)
 
                 data_set_json["name"] = \
-                    self.create_dataset_name(linked_service_json["name"], ds_name)
+                    self.create_dataset_name(
+                        linked_service_json["name"], ds_name)
 
                 parameters = linked_service_json["properties"].get(
                     "parameters", {})
@@ -204,6 +208,11 @@ class CreateDataFactoryObjects:
                 self.base_integration_runtime)
 
             pipeline_class = self.connection_types[conn]
+
+            schedule_details = config.get("schedule", pipeline_class.default_schedule)
+            schedule_id = (schedule_details["recurrence"], schedule_details["time"])
+            if schedule_id not in self.all_triggers:
+                self.all_triggers[schedule_id] = []
 
             source_linked_service_name = self.create_linked_service_name(
                 pipeline_class.authentications[auth]["linked_service"]["name"], ir_name)
@@ -240,12 +249,64 @@ class CreateDataFactoryObjects:
                 pipeline_obj.generate_pipeline()
                 self.all_pipelines[pipeline_obj.pipeline_json["name"]] = \
                     pipeline_obj.pipeline_json
+                self.all_triggers[schedule_id].append(
+                    pipeline_obj.pipeline_json["name"])
+
+    def generate_triggers(self):
+
+        def understand_time(time_str):
+            return datetime.strptime(time_str, "%H:%M")
+
+        def trigger_name(recurrence, time_str):
+            name_map = {
+                "hour": "Hourly",
+                "day": "Daily",
+                "week": "Weekly",
+                "month": "Monthly"
+            }
+            return name_map[recurrence] + "-" + time_str.replace(":", "")
+        
+        def add_recurrence(recurrence, time_str):
+            time_of_day = understand_time(time_str)
+            start_date = \
+                datetime(datetime.utcnow().year, 1, 1) + \
+                timedelta(hours=time_of_day.hour, minutes=time_of_day.minute)
+
+            return {
+                "frequency": recurrence.title(),
+                "interval": 1,
+                "startTime": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "timeZone": "UTC"
+            }
+
+        for schedule_id, pipelines in self.all_triggers.items():
+            self.all_trigger_jsons[schedule_id] = {
+                "name": trigger_name(*schedule_id),
+                "properties": {
+                    "annotations": [],
+                    "runtimeState": "Started",
+                    "pipelines": [
+                        {
+                            "pipelineReference": {
+                                "referenceName": pipeline,
+                                "type": "PipelineReference"
+                            }
+                        }
+                        for pipeline in pipelines
+                    ],
+                    "type": "ScheduleTrigger",
+                    "typeProperties": {
+                        "recurrence": add_recurrence(*schedule_id)
+                    }
+                }
+            }
 
     def create_all_jsons(self):
         self.find_self_hosted_integration_runtimes()
         self.find_all_linked_services()
         self.find_all_data_sets()
         self.generate_pipelines()
+        self.generate_triggers()
 
     def write_json(self, file_path, json_to_write):
         with open(file_path, "w") as json_file:
@@ -273,4 +334,9 @@ class CreateDataFactoryObjects:
             self.write_json(
                 f"{self.pipeline_folder}/{pipeline_json['name']}.json",
                 pipeline_json
+            )
+        for _, trigger_json in self.all_trigger_jsons.items():
+            self.write_json(
+                f"{self.trigger_folder}/{trigger_json['name']}.json",
+                trigger_json
             )

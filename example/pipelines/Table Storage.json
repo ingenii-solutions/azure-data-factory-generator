@@ -27,7 +27,7 @@
                         "referenceName": "ConfigTable",
                         "type": "DatasetReference",
                         "parameters": {
-                            "TableName": "KnownFiles"
+                            "TableName": "SFTPKnownFiles"
                         }
                     },
                     "firstRowOnly": false
@@ -141,7 +141,7 @@
                                     "referenceName": "ConfigTable",
                                     "type": "DatasetReference",
                                     "parameters": {
-                                        "TableName": "KnownFiles"
+                                        "TableName": "SFTPKnownFiles"
                                     }
                                 }
                             ]
@@ -183,7 +183,7 @@
                             "dependsOn": [],
                             "userProperties": [],
                             "typeProperties": {
-                                "variableName": "KnownFiles",
+                                "variableName": "SFTPKnownFiles",
                                 "value": {
                                     "value": "@item().RowKey",
                                     "type": "Expression"
@@ -217,7 +217,7 @@
                         "type": "Expression"
                     },
                     "condition": {
-                        "value": "@not(contains(variables('KnownFiles'), item()))",
+                        "value": "@not(contains(variables('SFTPKnownFiles'), item()))",
                         "type": "Expression"
                     }
                 }
@@ -231,7 +231,7 @@
                 "type": "String",
                 "defaultValue": "dataprovider-table1"
             },
-            "KnownFiles": {
+            "SFTPKnownFiles": {
                 "type": "Array"
             }
         },

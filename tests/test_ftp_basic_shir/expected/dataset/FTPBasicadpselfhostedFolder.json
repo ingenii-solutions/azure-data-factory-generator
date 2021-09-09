@@ -1,16 +1,12 @@
 {
-    "name": "SFTPBasicFolder",
+    "name": "FTPBasicadpselfhostedFolder",
     "properties": {
         "linkedServiceName": {
-            "referenceName": "SFTPBasic",
+            "referenceName": "FTPBasicadp-self-hosted",
             "type": "LinkedServiceReference",
             "parameters": {
                 "Host": {
                     "value": "@dataset().Host",
-                    "type": "Expression"
-                },
-                "KeyVaultName": {
-                    "value": "@dataset().KeyVaultName",
                     "type": "Expression"
                 },
                 "KeyVaultSecretName": {
@@ -19,6 +15,10 @@
                 },
                 "UserName": {
                     "value": "@dataset().UserName",
+                    "type": "Expression"
+                },
+                "Port": {
+                    "value": "@dataset().Port",
                     "type": "Expression"
                 }
             }
@@ -31,21 +31,22 @@
             "Host": {
                 "type": "String"
             },
-            "KeyVaultName": {
-                "type": "String"
-            },
             "KeyVaultSecretName": {
                 "type": "String"
             },
             "UserName": {
                 "type": "String"
+            },
+            "Port": {
+                "type": "Int",
+                "defaultValue": 21
             }
         },
         "annotations": [],
         "type": "Binary",
         "typeProperties": {
             "location": {
-                "type": "SftpLocation",
+                "type": "FtpServerLocation",
                 "folderPath": {
                     "value": "@dataset().FolderPath",
                     "type": "Expression"

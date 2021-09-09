@@ -1,8 +1,8 @@
 {
-    "name": "DataLakeFolder",
+    "name": "DataLakeadpselfhostedFolder",
     "properties": {
         "linkedServiceName": {
-            "referenceName": "DataLake",
+            "referenceName": "DataLakeadp-self-hosted",
             "type": "LinkedServiceReference",
             "parameters": {
                 "Name": {

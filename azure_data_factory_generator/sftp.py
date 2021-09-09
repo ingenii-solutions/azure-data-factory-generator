@@ -22,6 +22,11 @@ class FTPBasePipeline(DataFactoryPipeline):
         "config_table": config_table
     }
 
+    default_schedule = {
+        "type": "day",
+        "time": "06:00"
+    }
+
     required_table_parameters = ["name", "path"]
     # TODO: implement prefix and suffix checks
     #optional_table_parameters = ["zipped", "prefix", "suffix"]
@@ -62,7 +67,7 @@ class FTPBasePipeline(DataFactoryPipeline):
         if path_str == "/":
             return "root path"
         else:
-            return path_str.replace("/", "-")
+            return path_str.strip("/").replace("/", "-")
 
     def list_source_files(self):
         return {

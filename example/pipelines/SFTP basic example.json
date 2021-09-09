@@ -185,7 +185,7 @@
 						]
 					},
 					{
-						"activity": "Set KnownFiles",
+						"activity": "Set SFTPKnownFiles",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -205,7 +205,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"expression": {
-									"value": "@not(contains(variables('KnownFiles'), item()))",
+									"value": "@not(contains(variables('SFTPKnownFiles'), item()))",
 									"type": "Expression"
 								},
 								"ifTrueActivities": [
@@ -313,7 +313,7 @@
 				}
 			},
 			{
-				"name": "Set KnownFiles",
+				"name": "Set SFTPKnownFiles",
 				"type": "SetVariable",
 				"dependsOn": [
 					{
@@ -331,7 +331,7 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
-					"variableName": "KnownFiles",
+					"variableName": "SFTPKnownFiles",
 					"value": {
 						"value": "@union(activity('List current raw files').output.childItems, activity('List current archive files').output.childItems)",
 						"type": "Expression"
@@ -363,7 +363,7 @@
 			"FolderPath": {
 				"type": "String"
 			},
-			"KnownFiles": {
+			"SFTPKnownFiles": {
 				"type": "Array"
 			}
 		},

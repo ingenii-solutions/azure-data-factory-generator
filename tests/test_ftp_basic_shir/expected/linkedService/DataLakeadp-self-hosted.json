@@ -1,5 +1,5 @@
 {
-    "name": "DataLake",
+    "name": "DataLakeadp-self-hosted",
     "type": "Microsoft.DataFactory/factories/linkedservices",
     "properties": {
         "annotations": [],
@@ -11,6 +11,10 @@
         "type": "AzureBlobFS",
         "typeProperties": {
             "url": "https://@{linkedService().Name}.dfs.core.windows.net"
+        },
+        "connectVia": {
+            "referenceName": "adp-self-hosted",
+            "type": "IntegrationRuntimeReference"
         }
     }
 }

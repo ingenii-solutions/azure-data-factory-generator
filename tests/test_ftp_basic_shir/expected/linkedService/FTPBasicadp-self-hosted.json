@@ -1,12 +1,9 @@
 {
-    "name": "SFTPBasic",
+    "name": "FTPBasicadp-self-hosted",
     "properties": {
-        "type": "Sftp",
+        "type": "FtpServer",
         "parameters": {
             "Host": {
-                "type": "String"
-            },
-            "KeyVaultName": {
                 "type": "String"
             },
             "KeyVaultSecretName": {
@@ -14,23 +11,32 @@
             },
             "UserName": {
                 "type": "String"
+            },
+            "Port": {
+                "type": "Int",
+                "defaultValue": 21
             }
         },
         "annotations": [],
         "typeProperties": {
             "host": "@{linkedService().Host}",
-            "port": 22,
-            "skipHostKeyValidation": true,
+            "port": "@linkedService().Port",
+            "enableSsl": true,
+            "enableServerCertificateValidation": true,
             "authenticationType": "Basic",
             "userName": "@{linkedService().UserName}",
             "password": {
                 "type": "AzureKeyVaultSecret",
                 "store": {
-                    "referenceName": "@{linkedService().KeyVaultName}",
+                    "referenceName": "Credentials Store",
                     "type": "LinkedServiceReference"
                 },
                 "secretName": "@{linkedService().KeyVaultSecretName}"
             }
+        },
+        "connectVia": {
+            "referenceName": "adp-self-hosted",
+            "type": "IntegrationRuntimeReference"
         }
     }
 }

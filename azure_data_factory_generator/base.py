@@ -39,6 +39,8 @@ class DataFactoryPipeline(ABC):
     config_linked_service = None
     config_data_sets = {}
 
+    default_schedule = {}
+
     @classmethod
     def is_valid_authentication(cls, authentication_method: str) -> bool:
         return authentication_method in cls.authentications
