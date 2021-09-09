@@ -6,7 +6,7 @@
         "pipelines": [
             {
                 "pipelineReference": {
-                    "referenceName": "reprisk-country_rri",
+                    "referenceName": "example-data-provider-table1",
                     "type": "PipelineReference"
                 }
             }

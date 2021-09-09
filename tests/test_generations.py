@@ -19,10 +19,6 @@ class ExampleConfigGenerations(unittest.TestCase):
                 continue
             self.test_folders.append(top_level)
 
-    # @classmethod
-    # def tearDownClass(cls):
-    #     # Do teardown
-    #     return False
     @staticmethod
     def load_json(json_path):
         with open(json_path) as json_file:
@@ -54,6 +50,11 @@ class ExampleConfigGenerations(unittest.TestCase):
     def check_all_files_created(self, test_name, init_obj):
         self.comparison_files[test_name] = {}
         self.check_all_files_created_by_type(
+            test_name, "integrationRuntime", {
+                integration_runtime["name"]: integration_runtime
+                for _, integration_runtime in init_obj.all_self_hosted_integration_runtimes.items()}
+        )
+        self.check_all_files_created_by_type(
             test_name, "linkedService", [
                 linked_service["name"] 
                 for _, linked_service in init_obj.all_linked_service_jsons.items()]
@@ -67,6 +68,11 @@ class ExampleConfigGenerations(unittest.TestCase):
             test_name, "pipeline", [
                 pipeline["name"]
                 for _, pipeline in init_obj.all_pipelines.items()]
+        )
+        self.check_all_files_created_by_type(
+            test_name, "trigger", {
+                trigger["name"]: trigger
+                for _, trigger in init_obj.all_trigger_jsons.items()}
         )
     
     def handle_deepdiff_comparison(self, test_name, file_type, expected_file_name, comparison):
@@ -129,6 +135,11 @@ class ExampleConfigGenerations(unittest.TestCase):
 
     def compare_files(self, test_name, init_obj):
         self.compare_files_by_type(
+            test_name, "integrationRuntime", {
+                integration_runtime["name"]: integration_runtime
+                for _, integration_runtime in init_obj.all_self_hosted_integration_runtimes.items()}
+        )
+        self.compare_files_by_type(
             test_name, "linkedService", {
                 linked_service["name"]: linked_service
                 for _, linked_service in init_obj.all_linked_service_jsons.items()}
@@ -142,6 +153,11 @@ class ExampleConfigGenerations(unittest.TestCase):
             test_name, "pipeline", {
                 pipeline["name"]: pipeline
                 for _, pipeline in init_obj.all_pipelines.items()}
+        )
+        self.compare_files_by_type(
+            test_name, "trigger", {
+                trigger["name"]: trigger
+                for _, trigger in init_obj.all_trigger_jsons.items()}
         )
 
     def test_everything(self):
