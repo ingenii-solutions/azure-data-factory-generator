@@ -1,0 +1,123 @@
+{
+    "name": "FTP",
+    "properties": {
+        "activities": [
+            {
+                "name": "List files",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.00:01:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "FTPBinary",
+                        "type": "DatasetReference"
+                    },
+                    "fieldList": [
+                        "childItems"
+                    ],
+                    "storeSettings": {
+                        "type": "FtpReadSettings",
+                        "recursive": false,
+                        "enablePartitionDiscovery": false,
+                        "useBinaryTransfer": false
+                    },
+                    "formatSettings": {
+                        "type": "BinaryReadSettings"
+                    }
+                }
+            },
+            {
+                "name": "For each file",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "List files",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('List files').output.childItems",
+                        "type": "Expression"
+                    },
+                    "activities": [
+                        {
+                            "name": "Move file",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.00:10:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "BinarySource",
+                                    "storeSettings": {
+                                        "type": "FtpReadSettings",
+                                        "recursive": false,
+                                        "useBinaryTransfer": true,
+                                        "deleteFilesAfterCompletion": false
+                                    },
+                                    "formatSettings": {
+                                        "type": "BinaryReadSettings"
+                                    }
+                                },
+                                "sink": {
+                                    "type": "BinarySink",
+                                    "storeSettings": {
+                                        "type": "AzureBlobFSWriteSettings"
+                                    }
+                                },
+                                "enableStaging": false
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "FTPFile",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "FolderPath": "/",
+                                        "FileName": {
+                                            "value": "@item().name",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "DataLakeFolder",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "AccountName": "adpproddatalakei2x",
+                                        "FolderPath": "reprisk/example",
+                                        "FileName": {
+                                            "value": "@item().name",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ],
+        "annotations": [],
+        "lastPublishTime": "2021-09-02T11:26:52Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}
