@@ -141,3 +141,6 @@ scratch/
 
 # Flake8
 flake8_report.txt
+
+# pypi
+.pypirc
