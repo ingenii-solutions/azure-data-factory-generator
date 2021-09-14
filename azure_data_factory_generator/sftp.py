@@ -1,4 +1,3 @@
-from .activities.generic import filter_for_files
 from .base import DataFactoryPipeline
 from .templates.linked_service.config_table_storage import config_table_storage
 from .templates.linked_service.data_lake import data_lake

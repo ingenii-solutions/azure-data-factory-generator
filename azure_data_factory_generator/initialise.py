@@ -259,7 +259,6 @@ class CreateDataFactoryObjects:
 
         def trigger_name(recurrence, time_str):
             name_map = {
-                "hour": "Hourly",
                 "day": "Daily",
                 "week": "Weekly",
                 "month": "Monthly"
