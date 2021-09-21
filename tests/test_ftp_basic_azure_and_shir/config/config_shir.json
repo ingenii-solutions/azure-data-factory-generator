@@ -1,5 +1,5 @@
 {
-    "name": "example-data-provider",
+    "name": "example-data-provider-shir",
     "connection": "ftp",
     "authentication": "basic",
     "self_hosted_integration_runtime": "adp-self-hosted",

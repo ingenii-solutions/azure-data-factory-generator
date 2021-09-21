@@ -162,7 +162,7 @@ class ExampleConfigGenerations(unittest.TestCase):
 
     def test_everything(self):
         for test_name in self.test_folders:
-        
+
             initialisation_obj = CreateDataFactoryObjects(
                 f"tests/{test_name}/config", 
                 f"tests/{test_name}/generated")

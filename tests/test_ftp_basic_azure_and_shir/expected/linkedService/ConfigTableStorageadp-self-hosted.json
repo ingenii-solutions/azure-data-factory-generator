@@ -1,0 +1,22 @@
+{
+    "name": "ConfigTableStorageadp-self-hosted",
+    "type": "Microsoft.DataFactory/factories/linkedservices",
+    "properties": {
+        "annotations": [],
+        "type": "AzureTableStorage",
+        "typeProperties": {
+            "sasUri": {
+                "type": "AzureKeyVaultSecret",
+                "store": {
+                    "referenceName": "Credentials Store",
+                    "type": "LinkedServiceReference"
+                },
+                "secretName": "config-table-storage-sas-uri"
+            }
+        },
+        "connectVia": {
+            "referenceName": "adp-self-hosted",
+            "type": "IntegrationRuntimeReference"
+        }
+    }
+}

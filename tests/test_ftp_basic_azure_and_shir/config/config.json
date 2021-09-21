@@ -2,20 +2,28 @@
     "name": "example-data-provider",
     "connection": "ftp",
     "authentication": "basic",
-    "self_hosted_integration_runtime": "adp-self-hosted",
     "config": {
         "host": "hostaddress.com",
         "username": "username-321",
         "key_vault_secret_name": "example-data-provider-password"
     },
     "schedule": {
-        "frequency": "Day",
-        "time": "06:00"
-    },
+        "hours": [6],
+        "weekDays": [
+            "Tuesday",
+            "Thursday",
+            "Sunday"
+        ]
+    }
+,
     "tables": [
         {
             "name": "table1",
             "path": "/path1"
+        },
+        {
+            "name": "table2",
+            "path": "/path2"
         }
     ]
 }

@@ -16,20 +16,6 @@ class CreateDataFactoryObjects:
         "sftp": SFTPPipeline
     }
 
-    all_linked_services = set()
-    all_data_sets = set()
-
-    all_config_jsons = []
-    all_self_hosted_integration_runtimes = {}
-    all_linked_service_jsons = {}
-    all_data_set_jsons = {}
-    all_pipelines = {}
-    all_triggers = {}
-    all_trigger_jsons = {}
-
-    source_data_sets_per_type = {}
-    target_data_sets = {}
-
     base_integration_runtime = "AutoResolveIntegrationRuntime"
 
     def __init__(self, config_folder=None, generated_folder=None):
@@ -43,6 +29,21 @@ class CreateDataFactoryObjects:
         self.trigger_folder = f"{self.generated_folder}/trigger"
 
         self.check_folders()
+
+        self.all_linked_services = set()
+        self.all_data_sets = set()
+
+        self.all_config_jsons = []
+        self.all_self_hosted_integration_runtimes = {}
+        self.all_linked_service_jsons = {}
+        self.all_data_set_jsons = {}
+        self.all_pipelines = {}
+        self.all_triggers = {}
+        self.all_trigger_jsons = {}
+
+        self.source_data_sets_per_type = {}
+        self.target_data_sets = {}
+
 
     def check_folders(self):
         for folder in [

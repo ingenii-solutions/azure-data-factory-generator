@@ -1,0 +1,312 @@
+{
+    "name": "example-data-provider-shir-table1",
+    "properties": {
+        "activities": [
+            {
+                "name": "Get known files",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.00:01:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureTableSource",
+                        "azureTableSourceQuery": {
+                            "value": "PartitionKey eq 'example-data-provider-shir-table1'",
+                            "type": "Expression"
+                        },
+                        "azureTableSourceIgnoreTableNotFound": true
+                    },
+                    "dataset": {
+                        "referenceName": "ConfigTableStorageadpselfhosted",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "TableName": "SFTPKnownFiles"
+                        }
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "Each known file",
+                "type": "ForEach",
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('Get known files').output.value",
+                        "type": "Expression"
+                    },
+                    "activities": [
+                        {
+                            "name": "Add file name",
+                            "type": "AppendVariable",
+                            "dependsOn": [],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "SFTPKnownFiles",
+                                "value": {
+                                    "value": "@item().RowKey",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "dependsOn": [
+                    {
+                        "activity": "Get known files",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "List files at path1",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.00:01:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "FTPBasicadpselfhostedFolder",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "Host": "hostaddress.com",
+                            "UserName": "username-321",
+                            "KeyVaultSecretName": "example-data-provider-password",
+                            "FolderPath": "/path1"
+                        }
+                    },
+                    "fieldList": [
+                        "childItems"
+                    ],
+                    "storeSettings": {
+                        "type": "SftpReadSettings",
+                        "recursive": true,
+                        "enablePartitionDiscovery": false
+                    },
+                    "formatSettings": {
+                        "type": "BinaryReadSettings"
+                    }
+                }
+            },
+            {
+                "name": "Find new files",
+                "type": "Filter",
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('List files at path1').output.childItems",
+                        "type": "Expression"
+                    },
+                    "condition": {
+                        "value": "@not(contains(variables('SFTPKnownFiles'), item().name))",
+                        "type": "Expression"
+                    }
+                },
+                "dependsOn": [
+                    {
+                        "activity": "Each known file",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "List files at path1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "For each new file",
+                "type": "ForEach",
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('Find new files').output.value",
+                        "type": "Expression"
+                    },
+                    "activities": [
+                        {
+                            "name": "Move file",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.00:01:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "BinarySource",
+                                    "storeSettings": {
+                                        "type": "FtpReadSettings",
+                                        "recursive": false,
+                                        "useBinaryTransfer": true,
+                                        "deleteFilesAfterCompletion": false
+                                    },
+                                    "formatSettings": {
+                                        "type": "BinaryReadSettings"
+                                    }
+                                },
+                                "sink": {
+                                    "type": "BinarySink",
+                                    "storeSettings": {
+                                        "type": "AzureBlobFSWriteSettings"
+                                    }
+                                },
+                                "enableStaging": false
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "FTPBasicadpselfhostedFile",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "Host": "hostaddress.com",
+                                        "UserName": "username-321",
+                                        "KeyVaultSecretName": "example-data-provider-password",
+                                        "FolderPath": "/path1",
+                                        "FileName": {
+                                            "value": "@item().name",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "DataLakeadpselfhostedFolder",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "Name": "@pipeline().globalParameters.DataLakeName",
+                                        "Container": "raw",
+                                        "FolderPath": "example-data-provider-shir/table1"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Create new known file entry",
+                            "type": "Copy",
+                            "dependsOn": [
+                                {
+                                    "activity": "Move file",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.00:01:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureTableSource",
+                                    "additionalColumns": [
+                                        {
+                                            "name": "Row",
+                                            "value": {
+                                                "value": "@item().name",
+                                                "type": "Expression"
+                                            }
+                                        },
+                                        {
+                                            "name": "DateMoved",
+                                            "value": {
+                                                "value": "@utcnow()",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    ],
+                                    "azureTableSourceQuery": {
+                                        "value": "PartitionKey eq '1'",
+                                        "type": "Expression"
+                                    },
+                                    "azureTableSourceIgnoreTableNotFound": false
+                                },
+                                "sink": {
+                                    "type": "AzureTableSink",
+                                    "azureTableInsertType": "merge",
+                                    "azureTableDefaultPartitionKeyValue": {
+                                        "value": "example-data-provider-shir-table1",
+                                        "type": "Expression"
+                                    },
+                                    "azureTableRowKeyName": {
+                                        "value": "Row",
+                                        "type": "Expression"
+                                    },
+                                    "writeBatchSize": 10000
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "ConfigTableStorageadpselfhosted",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "TableName": "Select1"
+                                    }
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "ConfigTableStorageadpselfhosted",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "TableName": "SFTPKnownFiles"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "dependsOn": [
+                    {
+                        "activity": "Find new files",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": {},
+        "variables": {
+            "SFTPKnownFiles": {
+                "type": "Array"
+            }
+        },
+        "annotations": []
+    }
+}

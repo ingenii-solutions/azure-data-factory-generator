@@ -20,9 +20,9 @@ def create_schedule_id(config_obj):
     entries = {k: config_obj.get(k) for k in keys}
 
     if entries["weekDays"]:
-        entries["weekDays"] = [w for w in week if w in entries["weekDays"]]
+        entries["weekDays"] = tuple([w for w in week if w in entries["weekDays"]])
     elif entries["monthDays"]:
-        entries["monthDays"] = sorted(entries["monthDays"])
+        entries["monthDays"] = tuple(sorted(entries["monthDays"]))
     elif entries["frequency"] is None:
         entries["frequency"] = "Day"
 
@@ -86,7 +86,7 @@ def create_recurrence_object(frequency, interval, time, weekDays, monthDays, hou
             "schedule": {
                 "hours": list(hours), 
                 "minutes": list(minutes),
-                "weekDays": weekDays
+                "weekDays": list(weekDays)
             }
         }
     elif monthDays:
@@ -96,7 +96,7 @@ def create_recurrence_object(frequency, interval, time, weekDays, monthDays, hou
             "schedule": {
                 "hours": list(hours), 
                 "minutes": list(minutes),
-                "monthDays": monthDays
+                "monthDays": list(monthDays)
             }
         }
     elif frequency is None or frequency == "Day":

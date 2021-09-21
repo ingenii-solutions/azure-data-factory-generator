@@ -32,7 +32,6 @@ class DataFactoryPipeline(ABC):
     data_sets = {}
     source_store_settings = {}
 
-    authentications = {}
     source_data_sets = {}
     target_linked_service = None
     target_data_sets = {}
@@ -74,13 +73,11 @@ class DataFactoryPipeline(ABC):
         if errors:
             raise Exception(errors)
 
-    def __init__(self, name,
-                 activities=[], parameters={},
-                 variables={}, annotations=[]):
+    def __init__(self, name, parameters={}, variables={}, annotations=[]):
         self.pipeline_json = {
             "name": name,
             "properties": {
-                "activities": activities,
+                "activities": [],
                 "parameters": parameters,
                 "variables": variables,
                 "annotations": annotations
