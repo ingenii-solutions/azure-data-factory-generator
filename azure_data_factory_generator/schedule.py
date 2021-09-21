@@ -21,13 +21,16 @@ def create_schedule_id(config_obj):
 
     if entries["weekDays"]:
         entries["weekDays"] = [w for w in week if w in entries["weekDays"]]
-    if entries["monthDays"]:
+    elif entries["monthDays"]:
         entries["monthDays"] = sorted(entries["monthDays"])
+    elif entries["frequency"] is None:
+        entries["frequency"] = "Day"
 
-    if entries["frequency"] is None and entries["hours"] is None:
-        entries["hours"] = [0]
-    if entries["frequency"] is None and entries["minutes"] is None:
-        entries["minutes"] = [0]
+    if entries["frequency"] is None:
+        if entries["hours"] is None:
+            entries["hours"] = [0]
+        if entries["minutes"] is None:
+            entries["minutes"] = [0]
 
     if entries["hours"] is not None:
         entries["hours"] = tuple(sorted(entries["hours"]))

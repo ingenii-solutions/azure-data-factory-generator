@@ -17,11 +17,14 @@ class ScheduleGeneratorTestCase(TestCase):
         },
         {
             "frequency": "Hour",
-            "interval": 15
+            "interval": 3
         },
         {
             "frequency": "Day",
             "time": "06:00"
+        },
+        {
+            "time": "15:00"
         },
         {
             "hours": [6],
@@ -32,18 +35,33 @@ class ScheduleGeneratorTestCase(TestCase):
             ]
         },
         {
+            "hours": [6, 12],
+            "minutes": [15, 30],
+            "weekDays": [
+                "Monday",
+                "Thursday"
+            ]
+        },
+        {
             "hours": [6],
-            "monthDays": [1, 3, 5]
+            "monthDays": [1, 3, 5]},
+        {
+            "hours": [6, 7],
+            "minutes": [15],
+            "monthDays": [10, 13, 15]
         }
     ]
 
     def test_trigger_id(self):
         ids = [
             ("Minute", 15, None, None, None, None, None),
-            ("Hour", 15, None, None, None, None, None),
+            ("Hour", 3, None, None, None, None, None),
             ("Day", None, "06:00", None, None, None, None),
+            ("Day", None, "15:00", None, None, None, None),
             (None, None, None, ["Sunday", "Tuesday", "Thursday"], None, (6,), (0,)),
+            (None, None, None, ["Monday", "Thursday"], None, (6, 12), (15, 30)),
             (None, None, None, None, [1, 3, 5], (6,), (0,)),
+            (None, None, None, None, [10, 13, 15], (6, 7), (15,)),
         ]
         for config, id in zip(self.configs, ids):
             self.assertTupleEqual(create_schedule_id(config), id)
@@ -51,10 +69,13 @@ class ScheduleGeneratorTestCase(TestCase):
     def test_trigger_name(self):
         names = [
             "Every 15 Minutes",
-            "Every 15 Hours",
+            "Every 3 Hours",
             "Daily - 0600",
+            "Daily - 1500",
             "Each Week - Sun Tue Thur - 0600",
-            "Each Month - Days 1 3 5 - 0600"
+            "Each Week - Mon Thur - 0615 0630 1215 1230",
+            "Each Month - Days 1 3 5 - 0600",
+            "Each Month - Days 10 13 15 - 0615 0715"
         ]
         for config, result in zip(self.configs, names):
             self.assertEqual(
@@ -71,7 +92,7 @@ class ScheduleGeneratorTestCase(TestCase):
             },
             {
                 "frequency": "Hour",
-                "interval": 15,
+                "interval": 3,
                 "startTime": "2021-01-01T00:00:00Z",
                 "timeZone": "UTC"
             },
@@ -82,20 +103,36 @@ class ScheduleGeneratorTestCase(TestCase):
                 "timeZone": "UTC"
             },
             {
+                "frequency": "Day",
+                "interval": 1,
+                "startTime": "2021-01-01T15:00:00Z",
+                "timeZone": "UTC"
+            },
+            {
                 "frequency": "Week",
                 "interval": 1,
                 "startTime": "2021-01-01T00:00:00Z",
                 "timeZone": "UTC",
                 "schedule": {
-                    "minutes": [
-                        0
-                    ],
-                    "hours": [
-                        6
-                    ],
+                    "hours": [6],
+                    "minutes": [0],
                     "weekDays": [
                         "Sunday",
                         "Tuesday",
+                        "Thursday"
+                    ]
+                }
+            },
+            {
+                "frequency": "Week",
+                "interval": 1,
+                "startTime": "2021-01-01T00:00:00Z",
+                "timeZone": "UTC",
+                "schedule": {
+                    "hours": [6, 12],
+                    "minutes": [15, 30],
+                    "weekDays": [
+                        "Monday",
                         "Thursday"
                     ]
                 }
@@ -106,16 +143,27 @@ class ScheduleGeneratorTestCase(TestCase):
                 "startTime": "2021-01-01T00:00:00Z",
                 "timeZone": "UTC",
                 "schedule": {
-                    "minutes": [
-                        0
-                    ],
-                    "hours": [
-                        6
-                    ],
+                    "hours": [6],
+                    "minutes": [0],
                     "monthDays": [
                         1,
                         3,
                         5
+                    ]
+                }
+            },
+            {
+                "frequency": "Month",
+                "interval": 1,
+                "startTime": "2021-01-01T00:00:00Z",
+                "timeZone": "UTC",
+                "schedule": {
+                    "hours": [6, 7],
+                    "minutes": [15],
+                    "monthDays": [
+                        10,
+                        13,
+                        15
                     ]
                 }
             }
