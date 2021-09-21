@@ -89,6 +89,10 @@ class DataFactoryPipeline(ABC):
         if not self.source_store_settings:
             raise Exception(f"source_store_settings not set for data type {self.name}!")
 
+    @classmethod
+    def get_source_linked_service(cls, connection_name):
+        return cls.authentications[connection_name]["linked_service"]
+
     def add_activity(self, activity_json, depends_on=[]):
         self.pipeline_json["properties"]["activities"].append({
             **activity_json, 

@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
 from copy import deepcopy
 import json
 from os import listdir, makedirs, path
 from re import sub
 
+from .schedule import create_schedule_id, create_recurrence_object, trigger_name
 from .sftp import FTPPipeline, SFTPPipeline
 from .templates.dataset import all_data_sets
 from .templates.linked_service import all_linked_services
@@ -89,7 +89,7 @@ class CreateDataFactoryObjects:
                     "self_hosted_integration_runtime",
                     self.base_integration_runtime)
 
-                source_ls = conn.authentications[auth]["linked_service"]["name"]
+                source_ls = conn.get_source_linked_service(auth)["name"]
                 self.all_linked_services.add((source_ls, ir_name))
 
                 for _, source_dataset in conn.source_data_sets.items():
@@ -207,15 +207,18 @@ class CreateDataFactoryObjects:
                 "self_hosted_integration_runtime",
                 self.base_integration_runtime)
 
+            # Get the required pipeline type for this configuation
             pipeline_class = self.connection_types[conn]
 
+            # Add the schedule if we don't know about it already
             schedule_details = config.get("schedule", pipeline_class.default_schedule)
-            schedule_id = (schedule_details["recurrence"], schedule_details["time"])
+            schedule_id = create_schedule_id(schedule_details)
             if schedule_id not in self.all_triggers:
                 self.all_triggers[schedule_id] = []
 
+            # Take the linked services and add the required data sets to use them
             source_linked_service_name = self.create_linked_service_name(
-                pipeline_class.authentications[auth]["linked_service"]["name"], ir_name)
+                pipeline_class.get_source_linked_service(auth)["name"], ir_name)
             target_linked_service_name = self.create_linked_service_name(
                 pipeline_class.target_linked_service["name"], ir_name)
 
@@ -232,6 +235,7 @@ class CreateDataFactoryObjects:
                 }
             }
 
+            # Add a configuration linked service, separate to source and targetm if required
             if pipeline_class.config_linked_service:
                 config_linked_service_name = self.create_linked_service_name(
                     pipeline_class.config_linked_service["name"], ir_name)
@@ -241,6 +245,7 @@ class CreateDataFactoryObjects:
                     for data_set_id, data_set_template in pipeline_class.config_data_sets.items()
                 })
 
+            # Create a pipeline per table
             for table_definition in config["tables"]:
                 pipeline_obj = pipeline_class(
                     config["name"], config["authentication"],
@@ -253,30 +258,6 @@ class CreateDataFactoryObjects:
                     pipeline_obj.pipeline_json["name"])
 
     def generate_triggers(self):
-
-        def understand_time(time_str):
-            return datetime.strptime(time_str, "%H:%M")
-
-        def trigger_name(recurrence, time_str):
-            name_map = {
-                "day": "Daily",
-                "week": "Weekly",
-                "month": "Monthly"
-            }
-            return name_map[recurrence] + "-" + time_str.replace(":", "")
-        
-        def add_recurrence(recurrence, time_str):
-            time_of_day = understand_time(time_str)
-            start_date = \
-                datetime(datetime.utcnow().year, 1, 1) + \
-                timedelta(hours=time_of_day.hour, minutes=time_of_day.minute)
-
-            return {
-                "frequency": recurrence.title(),
-                "interval": 1,
-                "startTime": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "timeZone": "UTC"
-            }
 
         for schedule_id, pipelines in self.all_triggers.items():
             self.all_trigger_jsons[schedule_id] = {
@@ -295,7 +276,7 @@ class CreateDataFactoryObjects:
                     ],
                     "type": "ScheduleTrigger",
                     "typeProperties": {
-                        "recurrence": add_recurrence(*schedule_id)
+                        "recurrence": create_recurrence_object(*schedule_id)
                     }
                 }
             }
