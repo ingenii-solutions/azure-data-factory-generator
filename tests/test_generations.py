@@ -31,6 +31,7 @@ class ExampleConfigGenerations(unittest.TestCase):
         expected_file_names = [
             file.replace(".json", "")
             for file in os.listdir(f"tests/{test_name}/expected/{file_type}")
+            if file.endswith(".json")
         ]
         for dsn in expected_file_names:
             if dsn not in generated_file_names:
