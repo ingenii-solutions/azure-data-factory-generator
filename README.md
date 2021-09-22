@@ -5,6 +5,23 @@ This package integrates easily with the [Ingenii Azure Data Platform](https://gi
 
 * Current Version: 0.1.1
 
+## Package usage
+
+Install the package [using pip](https://pip.pypa.io/en/stable/user_guide/) with 
+```
+pip install azure_data_factory_generator
+```
+or, for a particular version
+```
+pip install azure_data_factory_generator==0.1.1
+```
+Alternatively, add it to your `requirements.txt` file. 
+
+Use the package by calling it directly with the locations of your config files and the folder that the generated objects should be placed within:
+```
+python -m azure_data_factory_generator path/to/config/files/folder path/to/generated/files/folder
+```
+
 ## Connections
 
 ### <a name="general_requirements"></a>General requirements
