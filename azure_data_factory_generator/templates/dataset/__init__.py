@@ -7,7 +7,7 @@ all_data_sets = {
     ds["name"]: ds
     for ds in [
         config_table,
-        data_lake_folder, data_lake_file, 
+        data_lake_folder, data_lake_file,
         ftp_folder, ftp_file,
         sftp_folder, sftp_file
     ]

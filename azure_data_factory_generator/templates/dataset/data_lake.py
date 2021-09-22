@@ -1,31 +1,31 @@
 data_lake_folder = {
-	"name": "DataLakeFolder",
-	"properties": {
-		"linkedServiceName": {},
-		"parameters": {
-			"Container": {
-				"type": "string"
-			},
-			"FolderPath": {
-				"type": "string"
-			}
-		},
-		"annotations": [],
-		"type": "Binary",
-		"typeProperties": {
-			"location": {
-				"type": "AzureBlobFSLocation",
-				"folderPath": {
-					"value": "@dataset().FolderPath",
-					"type": "Expression"
-				},
-				"fileSystem": {
-					"value": "@dataset().Container",
-					"type": "Expression"
-				}
-			}
-		}
-	}
+    "name": "DataLakeFolder",
+    "properties": {
+        "linkedServiceName": {},
+        "parameters": {
+            "Container": {
+                "type": "string"
+            },
+            "FolderPath": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "Binary",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "folderPath": {
+                    "value": "@dataset().FolderPath",
+                    "type": "Expression"
+                },
+                "fileSystem": {
+                    "value": "@dataset().Container",
+                    "type": "Expression"
+                }
+            }
+        }
+    }
 }
 data_lake_file = {
     "name": "DataLakeFile",

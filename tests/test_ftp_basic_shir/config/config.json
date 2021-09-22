@@ -9,7 +9,7 @@
         "key_vault_secret_name": "example-data-provider-password"
     },
     "schedule": {
-        "recurrence": "day",
+        "frequency": "Day",
         "time": "06:00"
     },
     "tables": [

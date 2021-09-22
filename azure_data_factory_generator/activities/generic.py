@@ -1,10 +1,11 @@
 def filter_for_files(output_activity):
+    dep_name = output_activity["name"]
     return {
-        "name": f"Only files from {output_activity['name']}",
+        "name": f"Only files from {dep_name}",
         "type": "Filter",
         "dependsOn": [
             {
-                "activity": output_activity["name"],
+                "activity": dep_name,
                 "dependencyConditions": [
                     "Succeeded"
                 ]
@@ -13,7 +14,7 @@ def filter_for_files(output_activity):
         "userProperties": [],
         "typeProperties": {
             "items": {
-                "value": f"@activity('{output_activity['name']}').output.childItems",
+                "value": f"@activity('{dep_name}').output.childItems",
                 "type": "Expression"
             },
             "condition": {

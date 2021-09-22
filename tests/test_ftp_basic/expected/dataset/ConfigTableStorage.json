@@ -1,0 +1,25 @@
+{
+    "name": "ConfigTableStorage",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "ConfigTableStorage",
+            "type": "LinkedServiceReference",
+            "parameters": {}
+        },
+        "parameters": {
+            "TableName": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "AzureTable",
+        "schema": [],
+        "typeProperties": {
+            "tableName": {
+                "value": "@dataset().TableName",
+                "type": "Expression"
+            }
+        }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
+}
