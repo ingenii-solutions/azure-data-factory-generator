@@ -11,7 +11,7 @@ config_table_storage = {
                     "referenceName": "Credentials Store",
                     "type": "LinkedServiceReference"
                 },
-                "secretName": "config-table-storage-sas-uri"
+                "secretName": "datalake-table-storage-sas-uri"
             }
         }
     }

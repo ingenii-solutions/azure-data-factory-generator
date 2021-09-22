@@ -3,7 +3,7 @@ Python based generator to create Azure Data Factory pipelines from configuration
 
 This package integrates easily with the [Ingenii Azure Data Platform](https://github.com/ingenii-solutions/azure-data-platform), but this package can be used independently as long as some required linked services and data sets are created ahead of time. These are detailed in the sections below.
 
-* Current Version: 0.1.1
+* Current Version: 0.1.2
 
 ## Package usage
 
@@ -13,7 +13,7 @@ pip install azure_data_factory_generator
 ```
 or, for a particular version
 ```
-pip install azure_data_factory_generator==0.1.1
+pip install azure_data_factory_generator==0.1.2
 ```
 Alternatively, add it to your `requirements.txt` file. 
 
@@ -76,7 +76,7 @@ As well as those listed in the [General requirements](#general_requirements), th
         1. All possible permissions should be added
         1. Change the expiration data to be a long time in the future (e.g. 2100-01-01)
         1. Once the token is created, copy the `Table service SAS URL` version, which starts with `https://`
-        1. Add this to the Key Vault with the secret name `config-table-storage-sas-uri`
+        1. Add this to the Key Vault with the secret name `datalake-table-storage-sas-uri`
 
 ## Triggers
 
