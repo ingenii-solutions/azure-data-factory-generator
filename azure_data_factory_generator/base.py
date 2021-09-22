@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+
 class DataFactoryPipeline(ABC):
-    
+
     # The general name of the connection type
     name = None
 
@@ -84,7 +85,8 @@ class DataFactoryPipeline(ABC):
             }
         }
         if not self.source_store_settings:
-            raise Exception(f"source_store_settings not set for data type {self.name}!")
+            raise Exception(
+                f"source_store_settings not set for data type {self.name}!")
 
     @classmethod
     def get_source_linked_service(cls, connection_name):
@@ -92,7 +94,7 @@ class DataFactoryPipeline(ABC):
 
     def add_activity(self, activity_json, depends_on=[]):
         self.pipeline_json["properties"]["activities"].append({
-            **activity_json, 
+            **activity_json,
             "dependsOn": [
                 {
                     "activity": activity["name"],
@@ -101,14 +103,14 @@ class DataFactoryPipeline(ABC):
                 for activity in depends_on
                 ]
             })
-    
+
     def create_pipeline_dataset_reference(self, data_set_json, parameters={}):
         missing_parameters = [
             parameter_name
-            for parameter_name in data_set_json["properties"].get("parameters", {})
-            if parameter_name not in parameters 
-                and data_set_json["properties"].get("parameters", {})[parameter_name]
-                                               .get("defaultValue") is None
+            for parameter_name, val
+            in data_set_json["properties"].get("parameters", {}).items()
+            if parameter_name not in parameters
+            and val.get("defaultValue") is None
         ]
         if missing_parameters:
             raise Exception(f"Missing parameters when accessing dataset "
@@ -118,8 +120,11 @@ class DataFactoryPipeline(ABC):
             "type": "DatasetReference",
             "parameters": parameters
         }
-    
-    def list_target_files(self, container, path, account_name=None, policy_ovverride={}):
+
+    def list_target_files(
+                self, container, path,
+                account_name="@pipeline().globalParameters.DataLakeName",
+                policy_ovverride={}):
         return {
             "name": f"List {container}/{path} files".replace("/", "-"),
             "type": "GetMetadata",
@@ -129,7 +134,7 @@ class DataFactoryPipeline(ABC):
             "typeProperties": {
                 "dataset": self.create_pipeline_dataset_reference(
                     self.data_sets["target_folder"], {
-                        "Name": account_name or "@pipeline().globalParameters.DataLakeName",
+                        "Name": account_name,
                         "Container": container,
                         "FolderPath": path
                     })
@@ -146,7 +151,7 @@ class DataFactoryPipeline(ABC):
                 "type": "BinaryReadSettings"
             }
         }
-    
+
     @abstractmethod
     def generate_pipeline(self):
         ...

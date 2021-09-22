@@ -11,7 +11,11 @@ day_name_map = {
     "Friday": "Fri",
     "Saturday": "Sat"
 }
-keys = ["frequency", "interval", "time", "weekDays", "monthDays", "hours", "minutes"]
+keys = [
+    "frequency", "interval", "time",
+    "weekDays", "monthDays",
+    "hours", "minutes"
+]
 start_date = datetime(datetime.utcnow().year, 1, 1, 0, 0)
 start_time_fmt = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -20,7 +24,8 @@ def create_schedule_id(config_obj):
     entries = {k: config_obj.get(k) for k in keys}
 
     if entries["weekDays"]:
-        entries["weekDays"] = tuple([w for w in week if w in entries["weekDays"]])
+        entries["weekDays"] = \
+            tuple([w for w in week if w in entries["weekDays"]])
     elif entries["monthDays"]:
         entries["monthDays"] = tuple(sorted(entries["monthDays"]))
     elif entries["frequency"] is None:
@@ -40,7 +45,9 @@ def create_schedule_id(config_obj):
     return tuple(entries[k] for k in keys)
 
 
-def trigger_name(frequency, interval, time, weekDays, monthDays, hours, minutes):
+def trigger_name(frequency, interval, time,
+                 weekDays, monthDays,
+                 hours, minutes):
 
     def create_times_list():
         return " ".join([
@@ -70,8 +77,9 @@ def trigger_name(frequency, interval, time, weekDays, monthDays, hours, minutes)
         return "Daily - " + time.replace(":", "")
 
 
-
-def create_recurrence_object(frequency, interval, time, weekDays, monthDays, hours, minutes):
+def create_recurrence_object(frequency, interval, time,
+                             weekDays, monthDays,
+                             hours, minutes):
 
     recurr_obj = {
         "interval": 1,
@@ -84,7 +92,7 @@ def create_recurrence_object(frequency, interval, time, weekDays, monthDays, hou
             **recurr_obj,
             "frequency": "Week",
             "schedule": {
-                "hours": list(hours), 
+                "hours": list(hours),
                 "minutes": list(minutes),
                 "weekDays": list(weekDays)
             }
@@ -94,7 +102,7 @@ def create_recurrence_object(frequency, interval, time, weekDays, monthDays, hou
             **recurr_obj,
             "frequency": "Month",
             "schedule": {
-                "hours": list(hours), 
+                "hours": list(hours),
                 "minutes": list(minutes),
                 "monthDays": list(monthDays)
             }
@@ -112,6 +120,5 @@ def create_recurrence_object(frequency, interval, time, weekDays, monthDays, hou
         recurr_obj["frequency"] = frequency
         if interval:
             recurr_obj["interval"] = interval
-    
-        return recurr_obj
 
+        return recurr_obj

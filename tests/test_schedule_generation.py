@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest import TestCase
 
 from azure_data_factory_generator.schedule import create_schedule_id, \
@@ -58,14 +58,18 @@ class ScheduleGeneratorTestCase(TestCase):
             ("Hour", 3, None, None, None, None, None),
             ("Day", None, "06:00", None, None, None, None),
             ("Day", None, "15:00", None, None, None, None),
-            (None, None, None, ("Sunday", "Tuesday", "Thursday"), None, (6,), (0,)),
-            (None, None, None, ("Monday", "Thursday"), None, (6, 12), (15, 30)),
+            (None, None, None,
+             ("Sunday", "Tuesday", "Thursday"),
+             None, (6,), (0,)),
+            (None, None, None,
+             ("Monday", "Thursday"),
+             None, (6, 12), (15, 30)),
             (None, None, None, None, (1, 3, 5), (6,), (0,)),
             (None, None, None, None, (10, 13, 15), (6, 7), (15,)),
         ]
         for config, id in zip(self.configs, ids):
             self.assertTupleEqual(create_schedule_id(config), id)
-    
+
     def test_trigger_name(self):
         names = [
             "Every 15 Minutes",
@@ -170,6 +174,5 @@ class ScheduleGeneratorTestCase(TestCase):
         ]
         for config, result in zip(self.configs, recurrence_objs):
             self.assertDictEqual(
-                create_recurrence_object(*create_schedule_id(config)), 
+                create_recurrence_object(*create_schedule_id(config)),
                 result)
-

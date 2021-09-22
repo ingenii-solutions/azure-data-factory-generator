@@ -1,16 +1,16 @@
 data_lake = {
-	"name": "DataLake",
-	"type": "Microsoft.DataFactory/factories/linkedservices",
-	"properties": {
-		"annotations": [],
+    "name": "DataLake",
+    "type": "Microsoft.DataFactory/factories/linkedservices",
+    "properties": {
+        "annotations": [],
         "parameters": {
-			"Name": {
-				"type": "String"
-			}
+            "Name": {
+                "type": "String"
+            }
         },
-		"type": "AzureBlobFS",
-		"typeProperties": {
-			"url": "https://@{linkedService().Name}.dfs.core.windows.net"
-		}
-	}
+        "type": "AzureBlobFS",
+        "typeProperties": {
+            "url": "https://@{linkedService().Name}.dfs.core.windows.net"
+        }
+    }
 }

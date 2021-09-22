@@ -28,7 +28,7 @@ class FTPBasePipeline(DataFactoryPipeline):
 
     required_table_parameters = ["name", "path"]
     # TODO: implement prefix and suffix checks
-    #optional_table_parameters = ["zipped", "prefix", "suffix"]
+    # optional_table_parameters = ["zipped", "prefix", "suffix"]
 
     def __init__(self, data_provider, authentication,
                  config, table_definition, data_sets):
@@ -38,7 +38,8 @@ class FTPBasePipeline(DataFactoryPipeline):
         self.table_definition = table_definition
         self.data_sets = data_sets
 
-        self.table_storage_partition_key = f"{data_provider}-{table_definition['name']}"
+        self.table_storage_partition_key = \
+            f"{data_provider}-{table_definition['name']}"
 
         self.data_lake_path = self.data_provider + \
             "/" + self.table_definition["name"]
@@ -70,7 +71,8 @@ class FTPBasePipeline(DataFactoryPipeline):
 
     def list_source_files(self):
         return {
-            "name": f"List files at {self.handle_path(self.table_definition['path'])}",
+            "name": "List files at " +
+                    self.handle_path(self.table_definition['path']),
             "type": "GetMetadata",
             "dependsOn": [],
             "policy": self.default_policy,
@@ -78,19 +80,15 @@ class FTPBasePipeline(DataFactoryPipeline):
             "typeProperties": {
                 "dataset": self.create_pipeline_dataset_reference(
                     self.data_sets["source_folder"], self.source_parameters),
-                "fieldList": [
-                    "childItems"
-                ],
+                "fieldList": ["childItems"],
                 "storeSettings": {
                     "type": "SftpReadSettings",
                     "recursive": True,
                     "enablePartitionDiscovery": False
                 },
-                "formatSettings": {
-                    "type": "BinaryReadSettings"
+                "formatSettings": {"type": "BinaryReadSettings"}
                 }
             }
-        }
 
     def list_known_files(self):
         return {
@@ -103,7 +101,8 @@ class FTPBasePipeline(DataFactoryPipeline):
                 "source": {
                     "type": "AzureTableSource",
                     "azureTableSourceQuery": {
-                        "value": f"PartitionKey eq '{self.table_storage_partition_key}'",
+                        "value": f"PartitionKey eq "
+                                 f"'{self.table_storage_partition_key}'",
                         "type": "Expression"
                     },
                     "azureTableSourceIgnoreTableNotFound": True
@@ -126,7 +125,9 @@ class FTPBasePipeline(DataFactoryPipeline):
             "userProperties": [],
             "typeProperties": {
                 "items": {
-                    "value": f"@activity('{known_files_activity['name']}').output.value",
+                    "value": "@activity('" +
+                             known_files_activity['name'] +
+                             "').output.value",
                     "type": "Expression"
                 },
                 "activities": [
@@ -154,147 +155,149 @@ class FTPBasePipeline(DataFactoryPipeline):
             "userProperties": [],
             "typeProperties": {
                 "items": {
-                    "value": f"@activity('{source_files_activity['name']}').output.childItems",
+                    "value": "@activity('" +
+                             source_files_activity['name'] +
+                             "').output.childItems",
                     "type": "Expression"
                 },
                 "condition": {
-                    "value": "@not(contains(variables('SFTPKnownFiles'), item().name))",
+                    "value": "@not(contains(variables('SFTPKnownFiles'), " +
+                             "item().name))",
                     "type": "Expression"
                 }
             }
         }
 
     def move_new_files(self, new_files_activity):
+        sub_activities = [
+            {
+                "name": "Move file",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": self.default_policy,
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "BinarySource",
+                        "storeSettings": self.source_store_settings,
+                        "formatSettings": {
+                            "type": "BinaryReadSettings"
+                        }
+                    },
+                    "sink": {
+                        "type": "BinarySink",
+                        "storeSettings": {
+                            "type": "AzureBlobFSWriteSettings"
+                        }
+                    },
+                    "enableStaging": False
+                },
+                "inputs": [self.create_pipeline_dataset_reference(
+                    self.data_sets["source_file"],
+                    {
+                        **self.source_parameters,
+                        "FileName": {
+                            "value": "@item().name",
+                            "type": "Expression"
+                        }
+                     }
+                )],
+                "outputs": [self.create_pipeline_dataset_reference(
+                    self.data_sets["target_folder"],
+                    {
+                        "Name": "@pipeline().globalParameters.DataLakeName",
+                        "Container": "raw",
+                        "FolderPath": self.data_lake_path
+                    }
+                )]
+            },
+            {
+                "name": "Create new known file entry",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Move file",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": self.default_policy,
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureTableSource",
+                        "additionalColumns": [
+                            {
+                                "name": "Row",
+                                "value": {
+                                    "value": "@item().name",
+                                    "type": "Expression"
+                                }
+                            },
+                            {
+                                "name": "DateMoved",
+                                "value": {
+                                    "value": "@utcnow()",
+                                    "type": "Expression"
+                                }
+                            }
+                        ],
+                        "azureTableSourceQuery": {
+                            "value": "PartitionKey eq '1'",
+                            "type": "Expression"
+                        },
+                        "azureTableSourceIgnoreTableNotFound": False
+                    },
+                    "sink": {
+                        "type": "AzureTableSink",
+                        "azureTableInsertType": "merge",
+                        "azureTableDefaultPartitionKeyValue": {
+                            "value": self.table_storage_partition_key,
+                            "type": "Expression"
+                        },
+                        "azureTableRowKeyName": {
+                            "value": "Row",
+                            "type": "Expression"
+                        },
+                        "writeBatchSize": 10000
+                    },
+                    "enableStaging": False,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": True,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": True,
+                            "treatBooleanAsNumber": False
+                        }
+                    }
+                },
+                "inputs": [
+                    self.create_pipeline_dataset_reference(
+                        self.data_sets["config_table"],
+                        parameters={"TableName": "Select1"}
+                    )
+                ],
+                "outputs": [
+                    self.create_pipeline_dataset_reference(
+                        self.data_sets["config_table"],
+                        parameters={"TableName": "SFTPKnownFiles"}
+                    )
+                ]
+            }
+        ]
         return {
             "name": "For each new file",
             "type": "ForEach",
             "userProperties": [],
             "typeProperties": {
                 "items": {
-                    "value": f"@activity('{new_files_activity['name']}').output.value",
+                    "value": "@activity('" +
+                             new_files_activity['name'] +
+                             "').output.value",
                     "type": "Expression"
                 },
-                "activities": [
-                    {
-                        "name": "Move file",
-                        "type": "Copy",
-                        "dependsOn": [],
-                        "policy": self.default_policy,
-                        "userProperties": [],
-                        "typeProperties": {
-                            "source": {
-                                "type": "BinarySource",
-                                "storeSettings": self.source_store_settings,
-                                "formatSettings": {
-                                    "type": "BinaryReadSettings"
-                                }
-                            },
-                            "sink": {
-                                "type": "BinarySink",
-                                "storeSettings": {
-                                    "type": "AzureBlobFSWriteSettings"
-                                }
-                            },
-                            "enableStaging": False
-                        },
-                        "inputs": [
-                            self.create_pipeline_dataset_reference(
-                                self.data_sets["source_file"],
-                                {
-                                    **self.source_parameters,
-                                    "FileName": {
-                                        "value": "@item().name",
-                                        "type": "Expression"
-                                    }
-                                }
-                            )
-                        ],
-                        "outputs": [
-                            self.create_pipeline_dataset_reference(
-                                self.data_sets["target_folder"],
-                                {
-                                    "Name": "@pipeline().globalParameters.DataLakeName",
-                                    "Container": "raw",
-                                    "FolderPath": self.data_lake_path
-                                }
-                            )
-                        ]
-                    },
-                    {
-                        "name": "Create new known file entry",
-                        "type": "Copy",
-                        "dependsOn": [
-                            {
-                                "activity": "Move file",
-                                "dependencyConditions": [
-                                    "Succeeded"
-                                ]
-                            }
-                        ],
-                        "policy": self.default_policy,
-                        "userProperties": [],
-                        "typeProperties": {
-                            "source": {
-                                "type": "AzureTableSource",
-                                "additionalColumns": [
-                                    {
-                                        "name": "Row",
-                                        "value": {
-                                            "value": "@item().name",
-                                            "type": "Expression"
-                                        }
-                                    },
-                                    {
-                                        "name": "DateMoved",
-                                        "value": {
-                                            "value": "@utcnow()",
-                                            "type": "Expression"
-                                        }
-                                    }
-                                ],
-                                "azureTableSourceQuery": {
-                                    "value": "PartitionKey eq '1'",
-                                    "type": "Expression"
-                                },
-                                "azureTableSourceIgnoreTableNotFound": False
-                            },
-                            "sink": {
-                                "type": "AzureTableSink",
-                                "azureTableInsertType": "merge",
-                                "azureTableDefaultPartitionKeyValue": {
-                                    "value": self.table_storage_partition_key,
-                                    "type": "Expression"
-                                },
-                                "azureTableRowKeyName": {
-                                    "value": "Row",
-                                    "type": "Expression"
-                                },
-                                "writeBatchSize": 10000
-                            },
-                            "enableStaging": False,
-                            "translator": {
-                                "type": "TabularTranslator",
-                                "typeConversion": True,
-                                "typeConversionSettings": {
-                                    "allowDataTruncation": True,
-                                    "treatBooleanAsNumber": False
-                                }
-                            }
-                        },
-                        "inputs": [
-                            self.create_pipeline_dataset_reference(
-                                self.data_sets["config_table"],
-                                parameters={"TableName": "Select1"}
-                            )
-                        ],
-                        "outputs": [
-                            self.create_pipeline_dataset_reference(
-                                self.data_sets["config_table"],
-                                parameters={"TableName": "SFTPKnownFiles"}
-                            )
-                        ]
-                    }
-                ]
+                "activities": sub_activities
             }
         }
 
@@ -329,7 +332,8 @@ class FTPPipeline(FTPBasePipeline):
     name = "ftp"
     authentications = {
         "basic": {
-            "required_config": ["host", "username", "key_vault_name", "key_vault_secret"],
+            "reqired_config": [
+                "host", "username", "key_vault_name", "key_vault_secret"],
             "linked_service": ftp_basic_key_vault
         }
     }
@@ -357,7 +361,8 @@ class SFTPPipeline(FTPBasePipeline):
     name = "sftp"
     authentications = {
         "basic": {
-            "required_config": ["host", "username", "key_vault_name", "key_vault_secret"],
+            "required_config": [
+                "host", "username", "key_vault_name", "key_vault_secret"],
             "linked_service": sftp_basic_key_vault
         }
     }

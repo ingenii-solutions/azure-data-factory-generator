@@ -1,6 +1,6 @@
 self_hosted_integration_runtime = {
-	"name": "SelfHostedIR",
-	"properties": {
-		"type": "SelfHosted"
-	}
+    "name": "SelfHostedIR",
+    "properties": {
+        "type": "SelfHosted"
+    }
 }
