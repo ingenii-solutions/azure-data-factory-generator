@@ -1,4 +1,4 @@
-from base import default_policy, DataFactoryPipeline
+from base import default_policy
 
 
 def get_key_vault_secret(secret_name):
@@ -13,7 +13,10 @@ def get_key_vault_secret(secret_name):
         "userProperties": [],
         "typeProperties": {
             "url": {
-                "value": f"@concat('https://', pipeline().globalParameters.AzureKeyVaultName, '.vault.azure.net/secrets/{secret_name}?api-version=7.0')",
+                "value": "@concat('https://', "
+                         "pipeline().globalParameters.AzureKeyVaultName, "
+                         "'.vault.azure.net/secrets/" + secret_name +
+                         "?api-version=7.0')",
                 "type": "Expression"
             },
             "method": "GET",
@@ -25,17 +28,20 @@ def get_key_vault_secret(secret_name):
     }
 
 
-def create_token_header(get_token_activity, key="Authorization", value_prefix="Token "):
+def create_token_header(get_token_activity,
+                        key="Authorization", value_prefix="Token "):
     return {
         "key": key,
         "value": {
-            "value": f"@concat('{value_prefix}', activity('{get_token_activity['name']}').output.value)",
+            "value": f"@concat('{value_prefix}', "
+                     f"activity('{get_token_activity['name']}').output.value)",
             "type": "Expression"
         }
     }
 
 
-def copy_data(data_provider, table, base_url, path, output_type, headers=[], file_name_prefix='download_'):
+def copy_data(data_provider, table, base_url, path, output_type,
+              headers=[], file_name_prefix='download_'):
     source = {
         "type": "RestSource",
         "httpRequestTimeout": "00:01:40",
@@ -54,7 +60,8 @@ def copy_data(data_provider, table, base_url, path, output_type, headers=[], fil
             "data_provider": data_provider,
             "table": table,
             "file_name": {
-                "value": f"@concat('{file_name_prefix}', utcnow('yyyy-MM-ddTHH:mm:ss'), '.csv')",
+                "value": "@concat('" + file_name_prefix +
+                         "', utcnow('yyyy-MM-ddTHH:mm:ss'), '.csv')",
                 "type": "Expression"
             }
         }
@@ -107,6 +114,7 @@ def generate_api_pipeline(data_provider, config, table):
 
     authorization_header = create_token_header(get_token)
 
-    copy_data_activity = copy_data(
+    copy_data(
         data_provider, table["name"],
-        config["base_url"], table["path"], config["output_type"], headers=[authorization_header])
+        config["base_url"], table["path"], config["output_type"],
+        headers=[authorization_header])
