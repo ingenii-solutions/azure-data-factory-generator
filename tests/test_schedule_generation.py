@@ -27,6 +27,9 @@ class ScheduleGeneratorTestCase(TestCase):
             "time": "15:00"
         },
         {
+            "hours": [6, 17]
+        },
+        {
             "hours": [6],
             "weekDays": [
                 "Tuesday",
@@ -58,6 +61,7 @@ class ScheduleGeneratorTestCase(TestCase):
             ("Hour", 3, None, None, None, None, None),
             ("Day", None, "06:00", None, None, None, None),
             ("Day", None, "15:00", None, None, None, None),
+            ("Day", None, None, None, None, (6,17), (0,)),
             (None, None, None,
              ("Sunday", "Tuesday", "Thursday"),
              None, (6,), (0,)),
@@ -76,6 +80,7 @@ class ScheduleGeneratorTestCase(TestCase):
             "Every 3 Hours",
             "Daily - 0600",
             "Daily - 1500",
+            "Daily - 0600 1700",
             "Each Week - Sun Tue Thur - 0600",
             "Each Week - Mon Thur - 0615 0630 1215 1230",
             "Each Month - Days 1 3 5 - 0600",
@@ -111,6 +116,16 @@ class ScheduleGeneratorTestCase(TestCase):
                 "interval": 1,
                 "startTime": "2021-01-01T15:00:00Z",
                 "timeZone": "UTC"
+            },
+            {
+                "frequency": "Day",
+                "interval": 1,
+                "startTime": "2021-01-01T06:00:00Z",
+                "timeZone": "UTC",
+                "schedule": {
+                    "hours": [6, 17],
+                    "minutes": [0]
+                }
             },
             {
                 "frequency": "Week",
