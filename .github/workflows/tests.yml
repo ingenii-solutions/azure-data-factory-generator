@@ -1,4 +1,4 @@
-name: Run tests and cehck package
+name: Run tests and check package
 
 on:
   push:
