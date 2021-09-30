@@ -36,6 +36,8 @@ def create_schedule_id(config_obj):
             entries["hours"] = [0]
         if entries["minutes"] is None:
             entries["minutes"] = [0]
+    elif entries["minutes"] is None and entries["hours"] is not None:
+        entries["minutes"] = [0]
 
     if entries["hours"] is not None:
         entries["hours"] = tuple(sorted(entries["hours"]))
@@ -73,8 +75,10 @@ def trigger_name(frequency, interval, time,
             "Days " + " ".join([str(d) for d in sorted(monthDays)]),
             create_times_list()
         ])
-    else:
+    elif time:
         return "Daily - " + time.replace(":", "")
+    else:
+        return "Daily - " + create_times_list()
 
 
 def create_recurrence_object(frequency, interval, time,
@@ -107,15 +111,25 @@ def create_recurrence_object(frequency, interval, time,
                 "monthDays": list(monthDays)
             }
         }
-    elif frequency is None or frequency == "Day":
-        hours, minutes = time.split(":")
-        return {
+    elif frequency in (None, "Day"):
+        obj = {
             **recurr_obj,
-            "frequency": "Day",
-            "startTime": (
-                start_date + timedelta(hours=int(hours), minutes=int(minutes))
-            ).strftime(start_time_fmt)
+            "frequency": "Day"
         }
+
+        if time is not None:
+            hour, minute = time.split(":")
+        else:
+            hour, minute = hours[0], minutes[0]
+            obj["schedule"] = {
+                "hours": list(hours),
+                "minutes": list(minutes)
+            }
+        obj["startTime"] = (
+                start_date + timedelta(hours=int(hour), minutes=int(minute))
+            ).strftime(start_time_fmt)
+
+        return obj
     else:
         recurr_obj["frequency"] = frequency
         if interval:

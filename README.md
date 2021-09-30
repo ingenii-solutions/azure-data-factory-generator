@@ -3,7 +3,7 @@ Python based generator to create Azure Data Factory pipelines from configuration
 
 This package integrates easily with the [Ingenii Azure Data Platform](https://github.com/ingenii-solutions/azure-data-platform), but this package can be used independently as long as some required linked services and data sets are created ahead of time. These are detailed in the sections below.
 
-* Current Version: 0.1.2
+* Current Version: 0.1.3
 
 ## Package usage
 
@@ -13,7 +13,7 @@ pip install azure_data_factory_generator
 ```
 or, for a particular version
 ```
-pip install azure_data_factory_generator==0.1.2
+pip install azure_data_factory_generator==0.1.3
 ```
 Alternatively, add it to your `requirements.txt` file. 
 
@@ -111,6 +111,11 @@ The most simple schedule is recurringly calling the pipeline after a fixed inter
     "schedule": {
         "time": "15:00"
     }
+
+    # Daily frequency is assumed, so runs every day at 6:00 AM and 5:00 PM
+    "schedule": {
+        "hours": [6, 17]
+    }
 ```
 
 ### Days of the week
@@ -164,4 +169,7 @@ This is the final option, where we can combine days of the week and month, for e
 
 ## Version History
 
+* `0.1.3`: Extend schedule to handle when only the hours of the dayt are specified 
+* `0.1.2`: Change the name of the secret name for the SAS URI to access the config tables
+* `0.1.1`: Add schedule generation from configuration, many more tests
 * `0.1.0`: Initial package, FTP/SFTP connections with basic authentication
