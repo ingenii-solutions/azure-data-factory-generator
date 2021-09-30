@@ -112,22 +112,23 @@ def create_recurrence_object(frequency, interval, time,
             }
         }
     elif frequency in (None, "Day"):
-        if time:
+        obj = {
+            **recurr_obj,
+            "frequency": "Day"
+        }
+
+        if time is not None:
             hour, minute = time.split(":")
         else:
             hour, minute = hours[0], minutes[0]
-        obj = {
-            **recurr_obj,
-            "frequency": "Day",
-            "startTime": (
-                start_date + timedelta(hours=int(hour), minutes=int(minute))
-            ).strftime(start_time_fmt)
-        }
-        if time is None:
             obj["schedule"] = {
                 "hours": list(hours),
                 "minutes": list(minutes)
             }
+        obj["startTime"] = (
+                start_date + timedelta(hours=int(hour), minutes=int(minute))
+            ).strftime(start_time_fmt)
+
         return obj
     else:
         recurr_obj["frequency"] = frequency
