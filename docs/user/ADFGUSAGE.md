@@ -58,6 +58,10 @@ As well as those listed in the [General requirements](#general_requirements), th
         1. Once the token is created, copy the `Table service SAS URL` version, which starts with `https://`
         1. Add this to the Key Vault with the secret name `datalake-table-storage-sas-uri`
 
+#### Process
+
+![SFTP Pipeline](./assets/sftp_pipeline.png)
+
 ## Triggers
 
 As well as defining the pipeline itself, we need to define when it runs. At the moment only the 'Schedule' type of trigger has been implemented [out of the types available.](https://docs.microsoft.com/en-us/azure/data-factory/concepts-pipeline-execution-triggers)
