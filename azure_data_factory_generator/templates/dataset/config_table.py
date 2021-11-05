@@ -10,7 +10,9 @@ config_table = {
                 "type": "string"
             }
         },
-        "annotations": [],
+        "annotations": [
+            "ManagedByIngeniiADFG"
+        ],
         "type": "AzureTable",
         "schema": [],
         "typeProperties": {

@@ -81,7 +81,7 @@ class DataFactoryPipeline(ABC):
                 "activities": [],
                 "parameters": parameters,
                 "variables": variables,
-                "annotations": annotations
+                "annotations": list(set(["ManagedByIngeniiADFG"] + annotations))
             }
         }
         if not self.source_store_settings:

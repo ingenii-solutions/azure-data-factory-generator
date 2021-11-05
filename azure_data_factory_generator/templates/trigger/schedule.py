@@ -1,7 +1,9 @@
 schedule = {
     "name": "schedule",
     "properties": {
-        "annotations": [],
+        "annotations": [
+            "ManagedByIngeniiADFG"
+        ],
         "runtimeState": "Started",
         "pipelines": [],
         "type": "ScheduleTrigger",
