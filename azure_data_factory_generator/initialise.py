@@ -301,10 +301,10 @@ class CreateDataFactoryObjects:
         self.generate_pipelines()
         self.generate_triggers()
 
-    def write_json(self, folder_path, json_to_write, base_annotations=[]):
+    def write_json(self, folder_path, json_to_write, default_annotations=[]):
 
         json_to_write["properties"]["annotations"] = list(set(
-            base_annotations + 
+            default_annotations + 
             json_to_write["properties"].get("annotations", [])
         ))
         
@@ -319,16 +319,16 @@ class CreateDataFactoryObjects:
 
         for _, ls_json in self.all_linked_service_jsons.items():
             self.write_json(self.linked_service_folder, ls_json, 
-                            base_annotations=default_annotations)
+                            default_annotations=default_annotations)
 
         for _, data_set_json in self.all_data_set_jsons.items():
             self.write_json(self.data_set_folder, data_set_json,
-                            base_annotations=default_annotations)
+                            default_annotations=default_annotations)
 
         for _, pipeline_json in self.all_pipelines.items():
             self.write_json(self.pipeline_folder, pipeline_json,
-                            base_annotations=default_annotations)
+                            default_annotations=default_annotations)
 
         for _, trigger_json in self.all_trigger_jsons.items():
             self.write_json(self.trigger_folder, trigger_json,
-                            base_annotations=default_annotations)
+                            default_annotations=default_annotations)
