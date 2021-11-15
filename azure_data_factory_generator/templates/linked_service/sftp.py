@@ -17,9 +17,7 @@ sftp_basic_key_vault = {
                 "defaultValue": 22
             },
         },
-        "annotations": [
-            "ManagedByIngeniiADFG"
-        ],
+        "annotations": [],
         "typeProperties": {
             "host": "@{linkedService().Host}",
             "port": "@linkedService().Port",

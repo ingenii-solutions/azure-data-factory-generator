@@ -2,9 +2,7 @@ config_table_storage = {
     "name": "ConfigTableStorage",
     "type": "Microsoft.DataFactory/factories/linkedservices",
     "properties": {
-        "annotations": [
-            "ManagedByIngeniiADFG"
-        ],
+        "annotations": [],
         "type": "AzureTableStorage",
         "typeProperties": {
             "sasUri": {

@@ -17,9 +17,7 @@ ftp_basic_key_vault = {
                 "defaultValue": 21
             },
         },
-        "annotations": [
-            "ManagedByIngeniiADFG"
-        ],
+        "annotations": [],
         "typeProperties": {
             "host": "@{linkedService().Host}",
             "port": "@linkedService().Port",

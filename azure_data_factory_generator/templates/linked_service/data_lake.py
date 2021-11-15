@@ -2,9 +2,7 @@ data_lake = {
     "name": "DataLake",
     "type": "Microsoft.DataFactory/factories/linkedservices",
     "properties": {
-        "annotations": [
-            "ManagedByIngeniiADFG"
-        ],
+        "annotations": [],
         "parameters": {
             "Name": {
                 "type": "String"

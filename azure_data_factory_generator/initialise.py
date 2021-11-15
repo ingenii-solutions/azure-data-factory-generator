@@ -3,6 +3,7 @@ import json
 from os import listdir, makedirs, path
 from re import sub
 
+from .defaults import default_annotations
 from .schedule import create_schedule_id, create_recurrence_object, \
     trigger_name
 from .sftp import FTPPipeline, SFTPPipeline
@@ -300,35 +301,34 @@ class CreateDataFactoryObjects:
         self.generate_pipelines()
         self.generate_triggers()
 
-    def write_json(self, file_path, json_to_write):
-        with open(file_path, "w") as json_file:
+    def write_json(self, folder_path, json_to_write, base_annotations=[]):
+
+        json_to_write["properties"]["annotations"] = list(set(
+            base_annotations + 
+            json_to_write["properties"].get("annotations", [])
+        ))
+        
+        with open(f"{folder_path}/{json_to_write['name']}.json", "w") as json_file:
             json.dump(json_to_write, json_file, indent=4)
 
     def create_all(self):
         self.create_all_jsons()
 
         for _, shir_json in self.all_self_hosted_integration_runtimes.items():
-            self.write_json(
-                f"{self.shir_folder}/{shir_json['name']}.json",
-                shir_json
-            )
+            self.write_json(self.shir_folder, shir_json)
+
         for _, ls_json in self.all_linked_service_jsons.items():
-            self.write_json(
-                f"{self.linked_service_folder}/{ls_json['name']}.json",
-                ls_json
-            )
+            self.write_json(self.linked_service_folder, ls_json, 
+                            base_annotations=default_annotations)
+
         for _, data_set_json in self.all_data_set_jsons.items():
-            self.write_json(
-                f"{self.data_set_folder}/{data_set_json['name']}.json",
-                data_set_json
-            )
+            self.write_json(self.data_set_folder, data_set_json,
+                            base_annotations=default_annotations)
+
         for _, pipeline_json in self.all_pipelines.items():
-            self.write_json(
-                f"{self.pipeline_folder}/{pipeline_json['name']}.json",
-                pipeline_json
-            )
+            self.write_json(self.pipeline_folder, pipeline_json,
+                            base_annotations=default_annotations)
+
         for _, trigger_json in self.all_trigger_jsons.items():
-            self.write_json(
-                f"{self.trigger_folder}/{trigger_json['name']}.json",
-                trigger_json
-            )
+            self.write_json(self.trigger_folder, trigger_json,
+                            base_annotations=default_annotations)

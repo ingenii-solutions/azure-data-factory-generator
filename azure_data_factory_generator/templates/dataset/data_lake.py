@@ -10,9 +10,7 @@ data_lake_folder = {
                 "type": "string"
             }
         },
-        "annotations": [
-            "ManagedByIngeniiADFG"
-        ],
+        "annotations": [],
         "type": "Binary",
         "typeProperties": {
             "location": {

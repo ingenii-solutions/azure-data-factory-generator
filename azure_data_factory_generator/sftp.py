@@ -1,12 +1,8 @@
 from .base import DataFactoryPipeline
-from .templates.linked_service.config_table_storage import config_table_storage
-from .templates.linked_service.data_lake import data_lake
-from .templates.linked_service.ftp import ftp_basic_key_vault
-from .templates.linked_service.sftp import sftp_basic_key_vault
-from .templates.dataset.config_table import config_table
-from .templates.dataset.data_lake import data_lake_folder
-from .templates.dataset.ftp import ftp_folder, ftp_file
-from .templates.dataset.sftp import sftp_folder, sftp_file
+from .templates.linked_service import config_table_storage, data_lake, \
+    ftp_basic_key_vault, sftp_basic_key_vault
+from .templates.dataset import config_table, data_lake_folder, ftp_folder, \
+    ftp_file, sftp_folder, sftp_file
 
 
 class FTPBasePipeline(DataFactoryPipeline):

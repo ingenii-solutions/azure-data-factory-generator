@@ -11,9 +11,7 @@ sftp_file = {
                 "type": "string"
             }
         },
-        "annotations": [
-            "ManagedByIngeniiADFG"
-        ],
+        "annotations": [],
         "type": "Binary",
         "typeProperties": {
             "location": {
