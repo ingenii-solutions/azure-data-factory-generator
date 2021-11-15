@@ -1,7 +1,7 @@
 {
     "name": "Daily - 0600",
     "properties": {
-        "annotations": [],
+        "annotations": ["ManagedByIngeniiADFG"],
         "runtimeState": "Started",
         "pipelines": [
             {

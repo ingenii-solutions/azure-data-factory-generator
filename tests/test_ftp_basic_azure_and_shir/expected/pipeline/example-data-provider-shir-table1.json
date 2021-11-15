@@ -307,6 +307,6 @@
                 "type": "Array"
             }
         },
-        "annotations": []
+        "annotations": ["ManagedByIngeniiADFG"]
     }
 }

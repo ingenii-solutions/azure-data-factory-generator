@@ -45,7 +45,7 @@
                 "defaultValue": 21
             }
         },
-        "annotations": [],
+        "annotations": ["ManagedByIngeniiADFG"],
         "type": "Binary",
         "typeProperties": {
             "location": {

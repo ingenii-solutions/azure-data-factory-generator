@@ -294,20 +294,31 @@ class CreateDataFactoryObjects:
                 }
             }
 
+    @staticmethod
+    def add_defaults(objects_json):
+        for _, v in objects_json.items():
+            v["properties"]["annotations"] = list(set(
+                default_annotations + 
+                v["properties"].get("annotations", [])
+            ))
+
     def create_all_jsons(self):
         self.find_self_hosted_integration_runtimes()
+
         self.find_all_linked_services()
+        self.add_defaults(self.all_linked_service_jsons)
+
         self.find_all_data_sets()
+        self.add_defaults(self.all_data_set_jsons)
+
         self.generate_pipelines()
+        self.add_defaults(self.all_pipelines)
+
         self.generate_triggers()
+        self.add_defaults(self.all_trigger_jsons)
 
-    def write_json(self, folder_path, json_to_write, default_annotations=[]):
+    def write_json(self, folder_path, json_to_write):
 
-        json_to_write["properties"]["annotations"] = list(set(
-            default_annotations + 
-            json_to_write["properties"].get("annotations", [])
-        ))
-        
         with open(f"{folder_path}/{json_to_write['name']}.json", "w") as json_file:
             json.dump(json_to_write, json_file, indent=4)
 
@@ -318,17 +329,13 @@ class CreateDataFactoryObjects:
             self.write_json(self.shir_folder, shir_json)
 
         for _, ls_json in self.all_linked_service_jsons.items():
-            self.write_json(self.linked_service_folder, ls_json, 
-                            default_annotations=default_annotations)
+            self.write_json(self.linked_service_folder, ls_json) 
 
         for _, data_set_json in self.all_data_set_jsons.items():
-            self.write_json(self.data_set_folder, data_set_json,
-                            default_annotations=default_annotations)
+            self.write_json(self.data_set_folder, data_set_json)
 
         for _, pipeline_json in self.all_pipelines.items():
-            self.write_json(self.pipeline_folder, pipeline_json,
-                            default_annotations=default_annotations)
+            self.write_json(self.pipeline_folder, pipeline_json)
 
         for _, trigger_json in self.all_trigger_jsons.items():
-            self.write_json(self.trigger_folder, trigger_json,
-                            default_annotations=default_annotations)
+            self.write_json(self.trigger_folder, trigger_json)

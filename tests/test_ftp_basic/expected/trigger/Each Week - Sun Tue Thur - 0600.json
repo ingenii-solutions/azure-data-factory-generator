@@ -1,7 +1,7 @@
 {
     "name": "Each Week - Sun Tue Thur - 0600",
     "properties": {
-        "annotations": [],
+        "annotations": ["ManagedByIngeniiADFG"],
         "runtimeState": "Started",
         "pipelines": [
             {
