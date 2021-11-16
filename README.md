@@ -13,7 +13,7 @@ pip install azure_data_factory_generator
 ```
 or, for a particular version
 ```
-pip install azure_data_factory_generator==0.1.3
+pip install azure_data_factory_generator==0.1.4
 ```
 Alternatively, add it to your `requirements.txt` file. 
 
@@ -24,10 +24,11 @@ python -m azure_data_factory_generator path/to/config/files/folder path/to/gener
 
 ## Using the package
 
-For details on using the package please refer to the [Azure Data Factory Usage documentation](docs/user/ADFGUSAGE.md). 
+For details on using the package please refer to the [Azure Data Factory Usage documentation](docs/user/Usage.md). 
 
 ## Version History
 
+* `0.1.4`: Add object annotations to track what is managed by this package 
 * `0.1.3`: Extend schedule to handle when only the hours of the dayt are specified 
 * `0.1.2`: Change the name of the secret name for the SAS URI to access the config tables
 * `0.1.1`: Add schedule generation from configuration, many more tests
