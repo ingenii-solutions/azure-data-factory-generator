@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Get the file name from the path
+function getName() {
+    echo "$1" | awk -F '/' '{ print $2 }' | sed 's/.json//'
+}
+
 # Set these to the details of the Data Factory you wish to update
 RESOURCEGROUP=<resource group name>
 DATAFACTORY=<data factory name>
@@ -7,7 +12,7 @@ DATAFACTORY=<data factory name>
 # Triggers
 declare -a local_triggers
 FILES="trigger/*"
-for t in $FILES; do local_triggers[${#local_triggers[@]}+1]=$(echo "$t" | awk -F '/' '{ print $2 }' | sed 's/.json//'); done
+find trigger -type f -name "*.json" -print0 | while IFS= read -r -d '' file; do local_triggers[${#local_triggers[@]}+1]=$(getName "$t"); done
 
 declare -a remote_triggers
 remote_triggers=($(az datafactory trigger list --resource-group "$RESOURCEGROUP" --factory-name "$DATAFACTORY" --query "[?properties.annotations!=null && contains(properties.annotations,'ManagedByIngeniiADFG')]"))
@@ -16,8 +21,7 @@ for remote in ${remote_triggers[@]}; do [[ " ${local_triggers[*]} " =~ " ${remot
 
 # Pipelines
 declare -a local_pipelines
-FILES="pipeline/*"
-for t in $FILES; do local_pipelines[${#local_pipelines[@]}+1]=$(echo "$t" | awk -F '/' '{ print $2 }' | sed 's/.json//'); done
+find pipeline -type f -name "*.json" -print0 | while IFS= read -r -d '' file; do local_pipelines[${#local_pipelines[@]}+1]=$(getName "$t"); done
 
 declare -a remote_pipelines
 remote_pipelines=($(az datafactory pipeline list --resource-group "$RESOURCEGROUP" --factory-name "$DATAFACTORY" --query "[?properties.annotations!=null && contains(properties.annotations,'ManagedByIngeniiADFG')]"))
@@ -26,8 +30,8 @@ for remote in ${remote_pipelines[@]}; do [[ " ${local_pipelines[*]} " =~ " ${rem
 
 # Datasets
 declare -a local_datasets
-FILES="dataset/*"
-for t in $FILES; do local_datasets[${#local_datasets[@]}+1]=$(echo "$t" | awk -F '/' '{ print $2 }' | sed 's/.json//'); done
+find dataset -type f -name "*.json" -print0 | while IFS= read -r -d '' file; do local_datasets[${#local_datasets[@]}+1]=$(getName "$t");
+done
 
 declare -a remote_datasets
 remote_datasets=($(az datafactory dataset list --resource-group "$RESOURCEGROUP" --factory-name "$DATAFACTORY" --query "[?properties.annotations!=null && contains(properties.annotations,'ManagedByIngeniiADFG')]"))
@@ -36,8 +40,7 @@ for remote in ${remote_datasets[@]}; do [[ " ${local_datasets[*]} " =~ " ${remot
 
 # Linked Services
 declare -a local_linkedservices
-FILES="linked-service/*"
-for t in $FILES; do local_linkedservices[${#local_linkedservices[@]}+1]=$(echo "$t" | awk -F '/' '{ print $2 }' | sed 's/.json//'); done
+find linkedService -type f -name "*.json" -print0 | while IFS= read -r -d '' file; do   local_linkedservices[${#local_linkedservices[@]}+1]=$(getName "$t"); done
 
 declare -a remote_linkedservices
 remote_linkedservices=($(az datafactory linked-service list --resource-group "$RESOURCEGROUP" --factory-name "$DATAFACTORY" --query "[?properties.annotations!=null && contains(properties.annotations,'ManagedByIngeniiADFG')]"))
