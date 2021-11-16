@@ -10,7 +10,7 @@ RESOURCEGROUP=<resource group name>
 DATAFACTORY=<data factory name>
 
 find integrationRuntime -type f -name "*.json" -print0 | while IFS= read -r -d '' file; do
-  if [[ $(cat "$file" | jq '.properties.type') == "SelfHosted" ]] 
+  if [[ $(cat "$file" | jq '.properties.type' | sed 's/"//g') == "SelfHosted" ]] 
   then
     az datafactory integration-runtime self-hosted create --resource-group "$RESOURCEGROUP" --factory-name "$DATAFACTORY" --integration-runtime-name "$(getName $file)"
   fi
