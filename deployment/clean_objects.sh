@@ -9,6 +9,7 @@ function getName() {
 RESOURCEGROUP=<resource group name>
 DATAFACTORY=<data factory name>
 
+OIFS=$IFS
 IFS=$'\n' 
 
 # Triggers
@@ -46,3 +47,5 @@ declare -a remote_linkedservices
 remote_linkedservices=($(az datafactory linked-service list --resource-group "$RESOURCEGROUP" --factory-name "$DATAFACTORY" --query "[?properties.annotations!=null && contains(properties.annotations,'ManagedByIngeniiADFG')].name" -o tsv))
 
 for remote in ${remote_linkedservices[@]}; do [[ "${IFS}${local_linkedservices[*]}${IFS}" =~ "${IFS}${remote}${IFS}" ]] || az datafactory linked-service delete --resource-group "$RESOURCEGROUP" --factory-name "$DATAFACTORY" --linked-service-name "$remote" --yes ; done
+
+IFS=$OIFS;
