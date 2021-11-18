@@ -1,167 +1,61 @@
 # Ingenii Azure Data Factory Generator Usage
 
+Here we detail how to use the [Ingenii Azure Data Factory Generator](https://github.com/ingenii-solutions/azure-data-factory-generator) to create the Azure Data Factory objects needed for your data obtaining pipelines.
+
+This package will create `.json` files that will be then uploaded to your Azure Data Factory instance to define the objects it needs for your data obtaining pipelines. This package will generate definitions for:
+1. self-hosted integration runtimes
+2. linked services
+3. datasets
+4. pipelines
+5. triggers
+
+All the generated resources, with the exception of the integration runtimes where it is not possible, will have the annotation `ManagedByIngeniiADFG`, to help us manage the deployment, as detailed below. We recommend storing and maintaining your configuration files and these generated files in a git repository.
+
 ## Connections
 
-These are the different connection types that this package supports drawing data from.
-
-### <a name="general_requirements"></a>General requirements
-
-If not using the Ingenii Azure Data Platform, then there are some resources that need to be created ahead of using this package, as these are assumed to exist already. The below are used by all different pipelines.
-
-1. A key vault linked service called `Credentials Store`, where credentials and secrets are drawn from. 
-    1. It's recommended that the Data Factory managed identity is used to connect to the Key Vault
-    1. The Data Factory requires `Get` credentials to the `Secrets` key vault type.
-1. A data lake linked service called `Data Lake`:
-    1. In the data lake itself, a container called `raw` which the files will be copied to
-
-### FTP/SFTP
-
-#### Requirements
-
-As well as those listed in the [General requirements](#general_requirements), these are specific to the FTP/SFTP pipelines that should be created ahead of time:
-
-1. Add to the data lake referenced by the linked service `Data Lake`:
-    1. A table in table storage called `KnownSFTPFiles` where we keep track of which files have been processed
-    1. A table called `Select1`, with an entry with PartitionKey `1` and RowKey `1`, for adding new entries to the `KnownSFTPFiles` table
-1. Add to the key vault referenced by the linked service `Credentials Store`:
-    1. The server password as a secret, with the name you have given in the config JSON at `config.key_vault_secret_name`
-    1. A [SAS token](https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview) that grants access to the table storage in the data lake referenced by the linked service `Data Lake`.
-        1. [Guide to creating a SAS token manually](https://docs.microsoft.com/en-us/azure/cognitive-services/translator/document-translation/create-sas-tokens?tabs=Containers)
-        1. `Allowed services` should be restricted to `Table`
-        1. `Allowed resource types` should be restricted to `Object`
-        1. All possible permissions should be added
-        1. Change the expiration data to be a long time in the future (e.g. 2100-01-01)
-        1. Once the token is created, copy the `Table service SAS URL` version, which starts with `https://`
-        1. Add this to the Key Vault with the secret name `datalake-table-storage-sas-uri`
-
-#### Example configuration
-```
-{
-    "name": "example-data-provider",
-    "connection": "ftp",
-    "authentication": "basic",
-    "self_hosted_integration_runtime": "adp-self-hosted",
-    "config": {
-        "host": "hostaddress.com",
-        "username": "username-321",
-        "key_vault_secret_name": "example-data-provider-password"
-    },
-    "schedule": {
-        "frequency": "Day",
-        "time": "06:00"
-    },
-    "tables": [
-        {
-            "name": "table1",
-            "path": "/path1"
-        }
-    ]
-}
-```
-| Key | Required | Description |
-| --- | --- | --- |
-| `name` | Yes | The name of the data provider that we are pulling data from. This will be used in naming Data Factory resources such as pipelines, and is the top-level folder name in the `raw` container in the data lake that the files will be copied to. |
-| `connection` | Yes | The connection type to use, in this case either `ftp` or `sftp`. This will set which protocol is used and the default port the pipeline will connect to: `21` for `ftp` and `22` for `sftp`. The port can be overridden with the `custom_port` argument in the `config` block detailed below. |
-| `authentication` | Yes | The authentication to be used to connect to the server. Currently only `basic` is supported. |
-| `self_hosted_integration_runtime` | No | If we need to use a self-hosted integration runtime to connect to the remote server, for example to use a fixed IP address, then the name of the runtime to use should be given here, which needs to be created ahead of time. If this entry is not provided then an Azure-provided integration runtime will be used. |
-| `config` | Yes | The configuration to connect to the remote server. |
-| `config.hostname` | Yes | The hostname of the remote server. |
-| `config.username` | Yes | The username to use to connect to the remote server. |
-| `config.key_vault_secret_name` | Yes | The password to connect to is sensitive, so we cannot specify it here. Instead, we hold the password as a secret in an Azure Key Vault, and the pipeline obtains it at runtime: it will access a Key Vault linked service called `Credentials Store` (as described in the General Requirements section) and get the secret with the name specified here. |
-| `schedule` | Yes | How often the pipeline will check the remote server. See the `Triggers` section below to see all the ways this can be configured. |
-| `tables` | Yes | The list of tables that we should pull from the remote server into the data lake `raw` container. |
-| `tables.name` | Yes | The name of the table the server files correspond to. This will both be the name of the table in the Databricks database, and part of the folder path in the data lake `raw` container that the files will be copied to: the full path will be `<data provider name>/<table name>`. |
-| `tables.path` | Yes | The path on the remote server to draw files from. All files found at this path will be copied. Currently, there is no filtering configuration options and the search is non-recursive. |
-
-#### Process
-
-![SFTP Pipeline](./assets/sftp_pipeline.png)
+Full details of the different connection sources we support, and how to set your configuration to connect to these sources can be found in the [Connections documentation](./Connections.md).
 
 ## Triggers
 
-As well as defining the pipeline itself, we need to define when it runs. At the moment only the 'Schedule' type of trigger has been implemented [out of the types available.](https://docs.microsoft.com/en-us/azure/data-factory/concepts-pipeline-execution-triggers)
+Full details of the triggers supported to schedule your pipelines can be found in the [Triggers documentation](./Triggers.md).
 
-All times are UTC. The option to change timezone has not yet been implemented.
+## Generation
 
-### Recurrence
+A full example of how to structure your files in your own data engineering repository is given in the [Ingenii Azure Data Platform Data Engineering Example repository](https://github.com/ingenii-solutions/azure-data-platform-data-engineering-example), specifically in the [Pipeline Generation documentation](https://github.com/ingenii-solutions/azure-data-platform-data-engineering-example/blob/main/docs/user/Pipeline_Generation.md).
 
-The most simple schedule is recurringly calling the pipeline after a fixed interval. The different approaches are:
+In short, all your config `.json` files should be contained in a folder, and a folder provided for the Data Factory `.json` files to be created into. These can both be the same folder.
 
-```
-    # Runs every 15 minutes
-    "schedule": {
-        "frequency": "Minute",
-        "interval": "15"
-    }
-
-    # Runs every 3 hours
-    "schedule": {
-        "frequency": "Hour",
-        "interval": "3"
-    }
-
-    # Runs every day at 6:00 AM
-    "schedule": {
-        "frequency": "Day",
-        "time": "06:00"
-    }
-
-    # Daily frequency is assumed, so runs every day at 3:00 PM
-    "schedule": {
-        "time": "15:00"
-    }
-
-    # Daily frequency is assumed, so runs every day at 6:00 AM and 5:00 PM
-    "schedule": {
-        "hours": [6, 17]
-    }
-```
-
-### Days of the week
-
-Another approach is to set the days of the week the pipeline will run, and at which time. Times follow a cron-like approach where hours and minutes are set separately, and all combinations are run.
+In this package is a script to read your configuration files, aggregate to determine which objects are required, and then write out these objects in `.json` files to be uploaded. The command has the structure
 
 ```
-    # Runs every Tuesday, Thursday, and Sunday at 6:00 AM
-    "schedule": {
-        "hours": [6],
-        "weekDays": [
-            "Tuesday",
-            "Thursday",
-            "Sunday"
-        ]
-    }
-
-    # Runs every Monday and Thursday, at 6:15, 6:30, 12:15, 12:30
-    "schedule": {
-        "hours": [6, 12],
-        "minutes": [15, 30],
-        "weekDays": [
-            "Monday",
-            "Thursday"
-        ]
-    }
+<python executable name> -m azure_data_factory_generator <folder that config .json files are held> <folder that the generated files should be added to>
 ```
 
-### Days of the month
-
-This approach runs the pipeline on certain days e.g. the third of the month. Similarly to the days fo the week, thhe hours and minutes are specified separately and follow a crom-like approach of combining all the permutations.
+So, if your configuration files are in a folder called `pipeline_generation`, you can run the command
 
 ```
-    # Runs on the 1st, 3rd, and 5th of each month at 6:00 AM
-    "schedule": {
-        "hours": [6],
-        "monthDays": [1, 3, 5]
-    }
-
-    # Runs on the 10th, 13th, and 15th of each month at 6:15 AM and 7:15 AM
-    "schedule": {
-        "hours": [6, 7],
-        "minutes": [15],
-        "monthDays": [10, 13, 15]
-    }
+python -m azure_data_factory_generator pipeline_generation pipeline_generation
 ```
 
-### Position in the month
+This will read all the `.json` files it finds in the folder - it will not traverse into subfolders - and then add the generated objects into subfolders called `dataset`, `integrationruntime`, etc. These can then be committed to your git repository.
 
-This is the final option, where we can combine days of the week and month, for example 'The third Monday of each month'. This has not yet been implemented.
+## Deployment
+
+### Approach
+
+[Azure does have recommendations and guides](https://docs.microsoft.com/en-us/azure/data-factory/continuous-integration-delivery) of how to deploy to a Data Factory, the `CD` part of `CI/CD`. We take a different approach for two reasons:
+
+1. Their apporoach involves developing the resources in a development Data Factory, where we are creating these through this Python package
+2. The approach of using an ARM template will define the entire Factory, while in our approach you can add other resources to your Data Factory directly, and this package will only manage the sub-set they create.
+
+### Tools
+
+1. [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/) to compare the current state of your Data Factory and update the resources as required. Details of how to install the `az` tool [can be found here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
+2. [jq](https://stedolan.github.io/jq/) to read and extract information from the generated `.json` files.
+
+### Deployment Scripts
+
+Example scripts to deploy the resources and remove anything in the Data Factory no longer needed are in the `deployment` folder of [this repository](https://github.com/ingenii-solutions/azure-data-factory-generator). You can use these for your own scripts, or please refer to the CI/CD pipeline for Azure DevOps we detail in the [Ingenii Azure Data Platform Data Engineering Example repository](https://github.com/ingenii-solutions/azure-data-platform-data-engineering-example).
+
+1. `add_objects.sh`: Deploys the resources, overwriting anything with the same name in the Data Factory already. The deployments must happen in this order as objects refer to each other; for example data sets expect the linked service to already exist, otherwise the deployment will fail.
+2. `clean_objects.sh`: Looks to remove any resources that the package once generated, but are now no longer used. Removes any resources with the annotation `ManagedByIngeniiADFG` which is in the Data Factory but not in the configuration. If there's a resource that you want to keep because you're using it in other pipelines, then you can remove the annotation to stop this behaviour. The exception is integration runtimes, which can't be annotated or removed using the CLI.

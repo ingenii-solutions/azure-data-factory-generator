@@ -1,8 +1,9 @@
 from copy import deepcopy
 import json
-from os import listdir, makedirs, path
+from os import listdir, makedirs, path, remove
 from re import sub
 
+from .defaults import default_annotations
 from .schedule import create_schedule_id, create_recurrence_object, \
     trigger_name
 from .sftp import FTPPipeline, SFTPPipeline
@@ -293,42 +294,69 @@ class CreateDataFactoryObjects:
                 }
             }
 
+    @staticmethod
+    def add_defaults(objects_json):
+        for _, v in objects_json.items():
+            v["properties"]["annotations"] = list(set(
+                default_annotations + 
+                v["properties"].get("annotations", [])
+            ))
+
     def create_all_jsons(self):
         self.find_self_hosted_integration_runtimes()
-        self.find_all_linked_services()
-        self.find_all_data_sets()
-        self.generate_pipelines()
-        self.generate_triggers()
 
-    def write_json(self, file_path, json_to_write):
-        with open(file_path, "w") as json_file:
+        self.find_all_linked_services()
+        self.add_defaults(self.all_linked_service_jsons)
+
+        self.find_all_data_sets()
+        self.add_defaults(self.all_data_set_jsons)
+
+        self.generate_pipelines()
+        self.add_defaults(self.all_pipelines)
+
+        self.generate_triggers()
+        self.add_defaults(self.all_trigger_jsons)
+
+    def write_json(self, folder_path, json_to_write):
+
+        with open(f"{folder_path}/{json_to_write['name']}.json", "w") as json_file:
             json.dump(json_to_write, json_file, indent=4)
+
+    @staticmethod
+    def clean_unused_jsons(folder_path, generated_jsons):
+        generated_json_names = [
+            f"{json['name']}.json"
+            for _, json in generated_jsons.items()
+        ]
+        all_files = [
+            f 
+            for f in listdir(folder_path) 
+            if path.isfile(path.join(folder_path, f)) and f.endswith(".json")
+        ]
+        for file in all_files:
+            if file not in generated_json_names:
+                remove(f"{folder_path}/{file}")
 
     def create_all(self):
         self.create_all_jsons()
 
         for _, shir_json in self.all_self_hosted_integration_runtimes.items():
-            self.write_json(
-                f"{self.shir_folder}/{shir_json['name']}.json",
-                shir_json
-            )
+            self.write_json(self.shir_folder, shir_json)
+
         for _, ls_json in self.all_linked_service_jsons.items():
-            self.write_json(
-                f"{self.linked_service_folder}/{ls_json['name']}.json",
-                ls_json
-            )
+            self.write_json(self.linked_service_folder, ls_json) 
+
         for _, data_set_json in self.all_data_set_jsons.items():
-            self.write_json(
-                f"{self.data_set_folder}/{data_set_json['name']}.json",
-                data_set_json
-            )
+            self.write_json(self.data_set_folder, data_set_json)
+
         for _, pipeline_json in self.all_pipelines.items():
-            self.write_json(
-                f"{self.pipeline_folder}/{pipeline_json['name']}.json",
-                pipeline_json
-            )
+            self.write_json(self.pipeline_folder, pipeline_json)
+
         for _, trigger_json in self.all_trigger_jsons.items():
-            self.write_json(
-                f"{self.trigger_folder}/{trigger_json['name']}.json",
-                trigger_json
-            )
+            self.write_json(self.trigger_folder, trigger_json)
+
+        self.clean_unused_jsons(self.shir_folder, self.all_self_hosted_integration_runtimes)
+        self.clean_unused_jsons(self.linked_service_folder, self.all_linked_service_jsons)
+        self.clean_unused_jsons(self.data_set_folder, self.all_data_set_jsons)
+        self.clean_unused_jsons(self.pipeline_folder, self.all_pipelines)
+        self.clean_unused_jsons(self.trigger_folder, self.all_trigger_jsons)

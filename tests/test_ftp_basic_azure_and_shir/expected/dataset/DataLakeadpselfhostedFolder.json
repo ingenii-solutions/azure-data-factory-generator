@@ -22,7 +22,7 @@
                 "type": "String"
             }
         },
-        "annotations": [],
+        "annotations": ["ManagedByIngeniiADFG"],
         "type": "Binary",
         "typeProperties": {
             "location": {
