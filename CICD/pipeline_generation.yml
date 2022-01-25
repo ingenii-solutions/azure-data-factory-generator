@@ -1,0 +1,26 @@
+trigger:
+  paths:
+    include:
+    - pipeline_generation/
+
+pool: 'DevOps Deployment'
+
+variables:
+- group: 'Managed Identity IDs'
+
+steps:
+# Deploy to Dev
+- ${{ if ne(variables['build.sourceBranch'], 'refs/heads/main') }}:
+  - template: pipeline_generation_template.yml
+    parameters:
+      data_factory_name: exampledatafactoryname
+      resource_group_name: exampleresourcegroupname
+      user_assigned_managed_identity_id: $(USER_ASSIGNED_MANAGED_IDENTITY_DEV)
+
+# Deploy to Test
+- ${{ if eq(variables['build.sourceBranch'], 'refs/heads/main') }}:
+  - template: pipeline_generation_template.yml
+    parameters:
+      data_factory_name: exampledatafactoryname
+      resource_group_name: exampleresourcegroupname
+      user_assigned_managed_identity_id: $(USER_ASSIGNED_MANAGED_IDENTITY_TEST)

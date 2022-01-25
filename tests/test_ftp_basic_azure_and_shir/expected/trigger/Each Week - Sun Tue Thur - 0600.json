@@ -22,7 +22,7 @@
             "recurrence": {
                 "frequency": "Week",
                 "interval": 1,
-                "startTime": "2021-01-01T00:00:00Z",
+                "startTime": "2022-01-01T00:00:00Z",
                 "timeZone": "UTC",
                 "schedule": {
                     "hours": [6],

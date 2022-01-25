@@ -26,6 +26,10 @@ python -m azure_data_factory_generator path/to/config/files/folder path/to/gener
 
 For details on using the package please refer to the [Azure Data Factory Usage documentation](docs/user/Usage.md). 
 
+## Example CI/CD
+
+For deploying into a Data Factory that is not integrated with a repository, also known as 'live' mode, we have included some example CI/CD pipelines in the `CICD` folder. These are in the format to be read by Azure Pipelines. Feel free to use these yourself or for inspiration in creating your own pipelines. 
+
 ## Version History
 
 * `0.1.4`: Add object annotations to track what is managed by this package 
