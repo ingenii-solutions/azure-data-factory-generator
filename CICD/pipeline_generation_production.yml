@@ -1,0 +1,14 @@
+trigger: none
+
+pool: 'DevOps Deployment'
+
+variables: 
+- template: variables.yml
+
+steps:
+# Deploy to the data lake
+- template: pipeline_generation_template.yml
+  parameters:
+    data_factory_name: exampledatafactoryname
+    resource_group_name: exampleresourcegroupname
+    user_assigned_managed_identity_id: $(USER_ASSIGNED_MANAGED_IDENTITY_PROD)

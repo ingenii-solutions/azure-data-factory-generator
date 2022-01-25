@@ -1,0 +1,133 @@
+parameters:
+- name: data_factory_name
+  type: string
+- name: resource_group_name
+  type: string
+- name: user_assigned_managed_identity_id
+  type: string
+
+steps:
+- script: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+  displayName: Install az cli
+
+- script: az config set extension.use_dynamic_install=yes_without_prompt
+  displayName: Allow installation of extensions automatically
+
+- script: sudo apt-get install -y jq
+  displayName: Install jq
+
+- script: az login --identity --username ${{ parameters.user_assigned_managed_identity_id }}
+  displayName: 'Get Azure credentials'
+
+- script: |
+    # Get the file name from the path
+    function getName() {
+      echo "$1" | awk -F '/' '{ print $2 }' | sed 's/.json//'
+    }
+
+    set -e
+
+    # Get the correct context
+    cd pipeline_generation
+
+    echo "Deploying integration runtimes . . ."
+    [ -d "integrationRuntime" ] && find integrationRuntime -type f -name "*.json" -print0 | while IFS= read -r -d '' file; do
+      if [[ $(cat "$file" | jq '.properties.type' | sed 's/"//g') == "SelfHosted" ]] 
+      then
+        az datafactory integration-runtime self-hosted create --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --integration-runtime-name "$(getName "$file")"
+      fi
+    done
+
+    echo "Deploying linked services . . ."
+    [ -d "linkedService" ] && find linkedService -type f -name "*.json" -print0 | while IFS= read -r -d '' file; do
+      az datafactory linked-service create --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --linked-service-name "$(getName "$file")" --properties "$(cat "$file" | jq '.properties')"
+    done
+
+    echo "Deploying datasets . . ."
+    [ -d "dataset" ] && find dataset -type f -name "*.json" -print0 | while IFS= read -r -d '' file; do
+      az datafactory dataset create --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --dataset-name "$(getName "$file")" --properties "$(cat "$file" | jq '.properties')"
+    done
+
+    echo "Deploying pipelines . . ."
+    [ -d "pipeline" ] && find pipeline -type f -name "*.json" -print0 | while IFS= read -r -d '' file; do
+      az datafactory pipeline create --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --name "$(getName "$file")" --pipeline "$(cat "$file" | jq '.properties')"
+    done
+
+    echo "Deploying triggers . . ."
+    [ -d "trigger" ] && find trigger -type f -name "*.json" -print0 | while IFS= read -r -d '' file; do
+      az datafactory trigger create --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --trigger-name "$(getName "$file")" --properties "$(cat "$file" | jq '.properties')"
+    done
+
+    cd ../
+  displayName: 'Deploy all generated objects'
+
+- script: |
+    # Get the file name from the path
+    function getName() {
+      echo "$1" | awk -F '/' '{ print $2 }' | sed 's/.json//'
+    }
+    export -f getName
+
+    set -e
+
+    OIFS=$IFS
+    IFS=$'\n'
+
+    # Get the correct context
+    cd pipeline_generation
+
+    # Triggers
+    if [ -d "trigger" ] 
+    then
+      echo "Checking triggers . . ." 
+      declare -a local_triggers
+      local_triggers=($(find trigger -type f -name "*.json" -print0 | xargs --null -I {} bash -c 'getName "$@"' _ {}))
+
+      declare -a remote_triggers
+      remote_triggers=($(az datafactory trigger list --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --query "[?properties.annotations!=null && contains(properties.annotations,'ManagedByIngeniiADFG')].name" -o tsv))
+
+      for remote in ${remote_triggers[@]}; do [[ "${IFS}${local_triggers[*]}${IFS}" =~ "${IFS}${remote}${IFS}" ]] || az datafactory trigger delete --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --name "$remote" --yes ; done
+    fi
+
+    # Pipelines
+    if [ -d "pipeline" ] 
+    then
+      echo "Checking pipelines . . ." 
+      declare -a local_pipelines
+      local_pipelines=($(find pipeline -type f -name "*.json" -print0 | xargs --null -I {} bash -c 'getName "$@"' _ {}))
+
+      declare -a remote_pipelines
+      remote_pipelines=($(az datafactory pipeline list --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --query "[?annotations!=null && contains(annotations,'ManagedByIngeniiADFG')].name" -o tsv))
+
+      for remote in ${remote_pipelines[@]}; do [[ "${IFS}${local_pipelines[*]}${IFS}" =~ "${IFS}${remote}${IFS}" ]] || az datafactory pipeline delete --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --name "$remote" --yes ; done
+    fi
+
+    # Datasets
+    if [ -d "dataset" ] 
+    then
+      echo "Checking datasets . . ." 
+      declare -a local_datasets
+      local_datasets=($(find dataset -type f -name "*.json" -print0 | xargs --null -I {} bash -c 'getName "$@"' _ {}))
+
+      declare -a remote_datasets
+      remote_datasets=($(az datafactory dataset list --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --query "[?properties.annotations!=null && contains(properties.annotations,'ManagedByIngeniiADFG')].name" -o tsv))
+
+      for remote in ${remote_datasets[@]}; do [[ "${IFS}${local_datasets[*]}${IFS}" =~ "${IFS}${remote}${IFS}" ]] || az datafactory dataset delete --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --dataset-name "$remote" --yes ; done
+    fi
+
+    # Linked Services
+    if [ -d "linkedService" ] 
+    then
+      echo "Checking linked services . . ." 
+      declare -a local_linkedservices
+      local_linkedservices=($(find linkedService -type f -name "*.json" -print0 | xargs --null -I {} bash -c 'getName "$@"' _ {}))
+
+      declare -a remote_linkedservices
+      remote_linkedservices=($(az datafactory linked-service list --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --query "[?properties.annotations!=null && contains(properties.annotations,'ManagedByIngeniiADFG')].name" -o tsv))
+
+      for remote in ${remote_linkedservices[@]}; do [[ "${IFS}${local_linkedservices[*]}${IFS}" =~ "${IFS}${remote}${IFS}" ]] || az datafactory linked-service delete --resource-group "${{ parameters.resource_group_name }}" --factory-name "${{ parameters.data_factory_name }}" --linked-service-name "$remote" --yes ; done
+    fi
+
+    IFS=$OIFS;
+
+  displayName: 'Remove unneccessary objects'

@@ -1,0 +1,3 @@
+variables: 
+- group: 'Managed Identity IDs'
+- group: 'Configuration Registry'
