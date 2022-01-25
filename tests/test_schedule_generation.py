@@ -96,31 +96,31 @@ class ScheduleGeneratorTestCase(TestCase):
             {
                 "frequency": "Minute",
                 "interval": 15,
-                "startTime": "2021-01-01T00:00:00Z",
+                "startTime": "2022-01-01T00:00:00Z",
                 "timeZone": "UTC"
             },
             {
                 "frequency": "Hour",
                 "interval": 3,
-                "startTime": "2021-01-01T00:00:00Z",
+                "startTime": "2022-01-01T00:00:00Z",
                 "timeZone": "UTC"
             },
             {
                 "frequency": "Day",
                 "interval": 1,
-                "startTime": "2021-01-01T06:00:00Z",
+                "startTime": "2022-01-01T06:00:00Z",
                 "timeZone": "UTC"
             },
             {
                 "frequency": "Day",
                 "interval": 1,
-                "startTime": "2021-01-01T15:00:00Z",
+                "startTime": "2022-01-01T15:00:00Z",
                 "timeZone": "UTC"
             },
             {
                 "frequency": "Day",
                 "interval": 1,
-                "startTime": "2021-01-01T06:00:00Z",
+                "startTime": "2022-01-01T06:00:00Z",
                 "timeZone": "UTC",
                 "schedule": {
                     "hours": [6, 17],
@@ -130,7 +130,7 @@ class ScheduleGeneratorTestCase(TestCase):
             {
                 "frequency": "Week",
                 "interval": 1,
-                "startTime": "2021-01-01T00:00:00Z",
+                "startTime": "2022-01-01T00:00:00Z",
                 "timeZone": "UTC",
                 "schedule": {
                     "hours": [6],
@@ -145,7 +145,7 @@ class ScheduleGeneratorTestCase(TestCase):
             {
                 "frequency": "Week",
                 "interval": 1,
-                "startTime": "2021-01-01T00:00:00Z",
+                "startTime": "2022-01-01T00:00:00Z",
                 "timeZone": "UTC",
                 "schedule": {
                     "hours": [6, 12],
@@ -159,7 +159,7 @@ class ScheduleGeneratorTestCase(TestCase):
             {
                 "frequency": "Month",
                 "interval": 1,
-                "startTime": "2021-01-01T00:00:00Z",
+                "startTime": "2022-01-01T00:00:00Z",
                 "timeZone": "UTC",
                 "schedule": {
                     "hours": [6],
@@ -174,7 +174,7 @@ class ScheduleGeneratorTestCase(TestCase):
             {
                 "frequency": "Month",
                 "interval": 1,
-                "startTime": "2021-01-01T00:00:00Z",
+                "startTime": "2022-01-01T00:00:00Z",
                 "timeZone": "UTC",
                 "schedule": {
                     "hours": [6, 7],
