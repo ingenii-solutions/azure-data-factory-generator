@@ -3,7 +3,7 @@ trigger: none
 pool: 'DevOps Deployment'
 
 variables: 
-- template: variables.yml
+- group: 'Managed Identity IDs'
 
 steps:
 # Deploy to the data lake
