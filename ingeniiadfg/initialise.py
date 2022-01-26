@@ -324,6 +324,12 @@ class CreateDataFactoryObjects:
                 default_annotations + 
                 v["properties"].get("annotations", [])
             ))
+        
+            if v.get("type", "").split("/")[-1] == "pipelines":
+                if not v["properties"]["parameters"]:
+                    del v["properties"]["parameters"]
+                if not v["properties"]["variables"]:
+                    del v["properties"]["variables"]
 
     def create_all_jsons(self):
         self.find_self_hosted_integration_runtimes()
