@@ -144,3 +144,6 @@ flake8_report.txt
 
 # pypi
 .pypirc
+
+# Poetry
+poetry.lock
