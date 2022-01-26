@@ -77,6 +77,7 @@ class DataFactoryPipeline(ABC):
     def __init__(self, name, parameters={}, variables={}, annotations=[]):
         self.pipeline_json = {
             "name": name,
+            "type": "Microsoft.DataFactory/factories/pipelines",
             "properties": {
                 "activities": [],
                 "parameters": parameters,
