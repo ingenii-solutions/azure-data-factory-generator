@@ -5,7 +5,7 @@ setup:
 
 test:
 	poetry install
-	pytest ./tests
+	poetry run pytest tests/
 
 build:
 	poetry build
