@@ -1,0 +1,29 @@
+{
+    "name": "example-data-provider-1",
+    "connection": "ftp",
+    "authentication": "basic",
+    "config": {
+        "host": "hostaddress1.com",
+        "username": "username-321-1",
+        "key_vault_secret_name": "example-data-provider-1-password"
+    },
+    "schedule": {
+        "hours": [6],
+        "weekDays": [
+            "Tuesday",
+            "Thursday",
+            "Sunday"
+        ]
+    }
+,
+    "tables": [
+        {
+            "name": "table1",
+            "path": "/path1"
+        },
+        {
+            "name": "table2",
+            "path": "/path2"
+        }
+    ]
+}

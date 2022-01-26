@@ -20,9 +20,12 @@ class CreateDataFactoryObjects:
 
     base_integration_runtime = "AutoResolveIntegrationRuntime"
 
-    def __init__(self, config_folder=None, generated_folder=None):
+    def __init__(self, config_folder=None, generated_folder=None,
+                 overwrite=False, remove_not_generated=False):
         self.config_folder = config_folder or "configs"
         self.generated_folder = generated_folder or "generated"
+        self.overwrite = overwrite
+        self.remove_not_generated = remove_not_generated
 
         self.shir_folder = f"{self.generated_folder}/integrationRuntime"
         self.linked_service_folder = f"{self.generated_folder}/linkedService"
@@ -117,6 +120,19 @@ class CreateDataFactoryObjects:
 
         # Validation of configs
 
+    @staticmethod
+    def get_file_path(folder_path, json_to_write):
+        return f"{folder_path}/{json_to_write['name']}.json"
+    
+    def get_current_json(self, folder_path, json_to_write):
+        file_path = self.get_file_path(folder_path, json_to_write)
+
+        if not path.isfile(file_path):
+            return
+
+        with open(file_path) as json_file:
+            return json.load(json_file)
+
     def create_linked_service_name(self, base_name, integration_runtime_name):
         if integration_runtime_name == self.base_integration_runtime:
             return base_name
@@ -124,10 +140,8 @@ class CreateDataFactoryObjects:
             return f"{base_name}{integration_runtime_name}"
 
     def create_linked_service(self, base_json, integration_runtime_name):
-        if integration_runtime_name == self.base_integration_runtime:
-            return base_json
-        else:
-            new_linked_service = deepcopy(base_json)
+        new_linked_service = deepcopy(base_json)
+        if integration_runtime_name != self.base_integration_runtime:
             new_linked_service["name"] = \
                 self.create_linked_service_name(base_json["name"],
                                                 integration_runtime_name)
@@ -135,7 +149,15 @@ class CreateDataFactoryObjects:
                 "referenceName": integration_runtime_name,
                 "type": "IntegrationRuntimeReference"
             }
-            return new_linked_service
+        
+        curr_file = self.get_current_json(
+            self.linked_service_folder, new_linked_service)
+        if curr_file and not self.overwrite:
+            if curr_file["properties"]["type"] == "AzureBlobFS":
+                new_linked_service["properties"]["typeProperties"]["url"] = \
+                    curr_file["properties"]["typeProperties"]["url"]
+
+        return new_linked_service
 
     def create_dataset_name(self, linked_service_name, data_set_template_name):
 
@@ -320,7 +342,6 @@ class CreateDataFactoryObjects:
 
     def write_json(self, folder_path, json_to_write):
 
-        file_path = f"{folder_path}/{json_to_write['name']}.json"
         with open(file_path, "w") as json_file:
             json.dump(json_to_write, json_file, indent=4)
 
@@ -339,7 +360,7 @@ class CreateDataFactoryObjects:
             if file not in generated_json_names:
                 remove(f"{folder_path}/{file}")
 
-    def create_all(self, overwrite=False, remove_not_generated=False):
+    def create_all(self):
         self.create_all_jsons()
 
         for _, shir_json in self.all_self_hosted_integration_runtimes.items():
@@ -357,7 +378,7 @@ class CreateDataFactoryObjects:
         for _, trigger_json in self.all_trigger_jsons.items():
             self.write_json(self.trigger_folder, trigger_json)
 
-        if remove_not_generated:
+        if self.remove_not_generated:
             self.clean_unused_jsons(self.shir_folder, self.all_self_hosted_integration_runtimes)
             self.clean_unused_jsons(self.linked_service_folder, self.all_linked_service_jsons)
             self.clean_unused_jsons(self.data_set_folder, self.all_data_set_jsons)

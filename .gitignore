@@ -136,7 +136,6 @@ dmypy.json
 
 # Scratch
 data/
-generated/
 scratch/
 
 # Flake8

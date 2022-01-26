@@ -1,0 +1,65 @@
+{
+    "name": "FTPBasicFile",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "FTPBasic",
+            "type": "LinkedServiceReference",
+            "parameters": {
+                "Host": {
+                    "value": "@dataset().Host",
+                    "type": "Expression"
+                },
+                "KeyVaultSecretName": {
+                    "value": "@dataset().KeyVaultSecretName",
+                    "type": "Expression"
+                },
+                "UserName": {
+                    "value": "@dataset().UserName",
+                    "type": "Expression"
+                },
+                "Port": {
+                    "value": "@dataset().Port",
+                    "type": "Expression"
+                }
+            }
+        },
+        "parameters": {
+            "FolderPath": {
+                "type": "string",
+                "defaultValue": "/"
+            },
+            "FileName": {
+                "type": "string"
+            },
+            "Host": {
+                "type": "String"
+            },
+            "KeyVaultSecretName": {
+                "type": "String"
+            },
+            "UserName": {
+                "type": "String"
+            },
+            "Port": {
+                "type": "Int",
+                "defaultValue": 21
+            }
+        },
+        "annotations": ["ManagedByIngeniiADFG"],
+        "type": "Binary",
+        "typeProperties": {
+            "location": {
+                "type": "FtpServerLocation",
+                "FileName": {
+                    "value": "@dataset().FileName",
+                    "type": "Expression"
+                },
+                "FolderPath": {
+                    "value": "@dataset().FolderPath",
+                    "type": "Expression"
+                }
+            }
+        }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
+}

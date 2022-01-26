@@ -39,8 +39,8 @@ def generate(
         makedirs(target_folder)
 
     initialisation_obj = CreateDataFactoryObjects(
-        configs_folder, target_folder)
-    initialisation_obj.create_all(
+        configs_folder, target_folder,
         overwrite=overwrite,
         remove_not_generated=remove_not_generated
     )
+    initialisation_obj.create_all()
