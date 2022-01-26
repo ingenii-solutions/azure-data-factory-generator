@@ -8,7 +8,7 @@ test:
 	pytest ./tests
 
 build:
-	python setup.py bdist_wheel
+	poetry build
 
 check:
 	twine check dist/*
