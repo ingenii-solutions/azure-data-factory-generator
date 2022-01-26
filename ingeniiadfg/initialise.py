@@ -321,7 +321,7 @@ class CreateDataFactoryObjects:
     def write_json(self, folder_path, json_to_write):
 
         file_path = f"{folder_path}/{json_to_write['name']}.json"
-        with open(f"{folder_path}/{json_to_write['name']}.json", "w") as json_file:
+        with open(file_path, "w") as json_file:
             json.dump(json_to_write, json_file, indent=4)
 
     @staticmethod
@@ -339,7 +339,7 @@ class CreateDataFactoryObjects:
             if file not in generated_json_names:
                 remove(f"{folder_path}/{file}")
 
-    def create_all(self, remove_not_generated=False):
+    def create_all(self, overwrite=False, remove_not_generated=False):
         self.create_all_jsons()
 
         for _, shir_json in self.all_self_hosted_integration_runtimes.items():

@@ -25,7 +25,8 @@ data_lake_folder = {
                 }
             }
         }
-    }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
 }
 data_lake_file = {
     "name": "DataLakeFile",
@@ -61,5 +62,6 @@ data_lake_file = {
                 }
             }
         }
-    }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
 }

@@ -26,7 +26,8 @@ sftp_file = {
                 }
             }
         }
-    }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
 }
 sftp_folder = {
     "name": "SFTPFolder",
@@ -49,5 +50,6 @@ sftp_folder = {
                 }
             }
         }
-    }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
 }

@@ -26,7 +26,8 @@ ftp_file = {
                 }
             }
         }
-    }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
 }
 ftp_folder = {
     "name": "FTPFolder",
@@ -49,5 +50,6 @@ ftp_folder = {
                 }
             }
         }
-    }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
 }
