@@ -123,7 +123,6 @@ class DataFactoryPipeline(ABC):
 
     def list_target_files(
                 self, container, path,
-                account_name="@pipeline().globalParameters.DataLakeName",
                 policy_ovverride={}):
         return {
             "name": f"List {container}/{path} files".replace("/", "-"),
@@ -134,7 +133,6 @@ class DataFactoryPipeline(ABC):
             "typeProperties": {
                 "dataset": self.create_pipeline_dataset_reference(
                     self.data_sets["target_folder"], {
-                        "Name": account_name,
                         "Container": container,
                         "FolderPath": path
                     })

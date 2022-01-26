@@ -201,7 +201,6 @@ class FTPBasePipeline(DataFactoryPipeline):
                 "outputs": [self.create_pipeline_dataset_reference(
                     self.data_sets["target_folder"],
                     {
-                        "Name": "@pipeline().globalParameters.DataLakeName",
                         "Container": "raw",
                         "FolderPath": self.data_lake_path
                     }

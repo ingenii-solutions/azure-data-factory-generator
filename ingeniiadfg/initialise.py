@@ -188,14 +188,15 @@ class CreateDataFactoryObjects:
                 data_set_json["properties"]["linkedServiceName"] = {
                     "referenceName": linked_service_json["name"],
                     "type": "LinkedServiceReference",
-                    "parameters": {
+                }
+                if parameters:
+                    data_set_json["properties"]["linkedServiceName"]["parameters"] = {
                         param: {
                             "value": f"@dataset().{param}",
                             "type": "Expression"
                         }
                         for param in parameters
                     }
-                }
                 # Add linked service parameters to data set parameters
                 for param, val in parameters.items():
                     data_set_json["properties"]["parameters"][param] = val
@@ -319,6 +320,7 @@ class CreateDataFactoryObjects:
 
     def write_json(self, folder_path, json_to_write):
 
+        file_path = f"{folder_path}/{json_to_write['name']}.json"
         with open(f"{folder_path}/{json_to_write['name']}.json", "w") as json_file:
             json.dump(json_to_write, json_file, indent=4)
 

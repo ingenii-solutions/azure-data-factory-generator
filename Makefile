@@ -4,7 +4,7 @@ setup:
 	@cp .pypirc-dist .pypirc
 
 test:
-	pip install -e .
+	poetry install
 	pytest ./tests
 
 build:

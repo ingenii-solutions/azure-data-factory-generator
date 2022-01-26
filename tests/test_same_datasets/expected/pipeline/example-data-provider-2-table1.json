@@ -196,7 +196,6 @@
                                     "referenceName": "DataLakeFolder",
                                     "type": "DatasetReference",
                                     "parameters": {
-                                        "Name": "@pipeline().globalParameters.DataLakeName",
                                         "Container": "raw",
                                         "FolderPath": "example-data-provider-2/table1"
                                     }

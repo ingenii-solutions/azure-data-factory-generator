@@ -3,13 +3,7 @@
     "properties": {
         "linkedServiceName": {
             "referenceName": "DataLake",
-            "type": "LinkedServiceReference",
-            "parameters": {
-                "Name": {
-                    "value": "@dataset().Name",
-                    "type": "Expression"
-                }
-            }
+            "type": "LinkedServiceReference"
         },
         "parameters": {
             "Container": {
@@ -17,9 +11,6 @@
             },
             "FolderPath": {
                 "type": "string"
-            },
-            "Name": {
-                "type": "String"
             }
         },
         "annotations": ["ManagedByIngeniiADFG"],

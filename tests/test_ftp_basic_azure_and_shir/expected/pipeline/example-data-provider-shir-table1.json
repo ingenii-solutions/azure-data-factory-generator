@@ -196,7 +196,6 @@
                                     "referenceName": "DataLakeadpselfhostedFolder",
                                     "type": "DatasetReference",
                                     "parameters": {
-                                        "Name": "@pipeline().globalParameters.DataLakeName",
                                         "Container": "raw",
                                         "FolderPath": "example-data-provider-shir/table1"
                                     }
