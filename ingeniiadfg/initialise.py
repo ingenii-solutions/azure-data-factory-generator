@@ -341,7 +341,7 @@ class CreateDataFactoryObjects:
         self.add_defaults(self.all_trigger_jsons)
 
     def write_json(self, folder_path, json_to_write):
-
+        file_path = self.get_file_path(folder_path, json_to_write)
         with open(file_path, "w") as json_file:
             json.dump(json_to_write, json_file, indent=4)
 
