@@ -78,7 +78,7 @@ class FTPBasePipeline(DataFactoryPipeline):
                     self.data_sets["source_folder"], self.source_parameters),
                 "fieldList": ["childItems"],
                 "storeSettings": {
-                    "type": "SftpReadSettings",
+                    "type": "FtpReadSettings",
                     "recursive": True,
                     "enablePartitionDiscovery": False
                 },

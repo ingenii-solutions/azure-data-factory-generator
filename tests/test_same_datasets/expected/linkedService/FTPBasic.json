@@ -1,5 +1,6 @@
 {
     "name": "FTPBasic",
+    "type": "Microsoft.DataFactory/factories/linkedservices",
     "properties": {
         "type": "FtpServer",
         "parameters": {

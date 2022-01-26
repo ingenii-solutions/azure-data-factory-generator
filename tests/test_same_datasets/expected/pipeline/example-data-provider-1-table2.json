@@ -94,7 +94,7 @@
                         "childItems"
                     ],
                     "storeSettings": {
-                        "type": "SftpReadSettings",
+                        "type": "FtpReadSettings",
                         "recursive": true,
                         "enablePartitionDiscovery": false
                     },

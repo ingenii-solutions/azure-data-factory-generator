@@ -1,5 +1,6 @@
 ftp_basic_key_vault = {
     "name": "FTPBasic",
+    "type": "Microsoft.DataFactory/factories/linkedservices",
     "properties": {
         "type": "FtpServer",
         "parameters": {

@@ -1,5 +1,6 @@
 sftp_basic_key_vault = {
     "name": "SFTPBasic",
+    "type": "Microsoft.DataFactory/factories/linkedservices",
     "properties": {
         "type": "Sftp",
         "parameters": {
