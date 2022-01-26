@@ -3,17 +3,17 @@ Python based generator to create Azure Data Factory pipelines from configuration
 
 This package integrates easily with the [Ingenii Azure Data Platform](https://github.com/ingenii-solutions/azure-data-platform), but this package can be used independently as long as some required linked services and data sets are created ahead of time. These are detailed in the sections below.
 
-* Current Version: 0.1.4
+* Current Version: 0.1.5
 
 ## Package installation
 
 Install the package [using pip](https://pip.pypa.io/en/stable/user_guide/) with 
 ```
-pip install azure_data_factory_generator
+pip install ingeniiadfg
 ```
 or, for a particular version
 ```
-pip install azure_data_factory_generator==0.1.4
+pip install ingeniiadfg==0.1.5
 ```
 Alternatively, add it to your `requirements.txt` file. 
 

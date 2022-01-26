@@ -337,7 +337,7 @@ class CreateDataFactoryObjects:
             if file not in generated_json_names:
                 remove(f"{folder_path}/{file}")
 
-    def create_all(self):
+    def create_all(self, remove_non_generated=False):
         self.create_all_jsons()
 
         for _, shir_json in self.all_self_hosted_integration_runtimes.items():
@@ -355,8 +355,9 @@ class CreateDataFactoryObjects:
         for _, trigger_json in self.all_trigger_jsons.items():
             self.write_json(self.trigger_folder, trigger_json)
 
-        self.clean_unused_jsons(self.shir_folder, self.all_self_hosted_integration_runtimes)
-        self.clean_unused_jsons(self.linked_service_folder, self.all_linked_service_jsons)
-        self.clean_unused_jsons(self.data_set_folder, self.all_data_set_jsons)
-        self.clean_unused_jsons(self.pipeline_folder, self.all_pipelines)
-        self.clean_unused_jsons(self.trigger_folder, self.all_trigger_jsons)
+        if remove_non_generated:
+            self.clean_unused_jsons(self.shir_folder, self.all_self_hosted_integration_runtimes)
+            self.clean_unused_jsons(self.linked_service_folder, self.all_linked_service_jsons)
+            self.clean_unused_jsons(self.data_set_folder, self.all_data_set_jsons)
+            self.clean_unused_jsons(self.pipeline_folder, self.all_pipelines)
+            self.clean_unused_jsons(self.trigger_folder, self.all_trigger_jsons)

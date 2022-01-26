@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest import TestCase
 
-from azure_data_factory_generator.schedule import create_schedule_id, \
+from ingeniiadfg.schedule import create_schedule_id, \
     create_recurrence_object, trigger_name
 
 
