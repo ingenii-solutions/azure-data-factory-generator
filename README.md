@@ -15,12 +15,7 @@ or, for a particular version
 ```
 pip install ingeniiadfg==0.1.5
 ```
-Alternatively, add it to your `requirements.txt` file. 
-
-Use the package by calling it directly with the locations of your config files and the folder that the generated objects should be placed within:
-```
-python -m azure_data_factory_generator path/to/config/files/folder path/to/generated/files/folder
-```
+Alternatively, add it to your repository's current `requirements.txt` file. 
 
 ## Using the package
 
@@ -32,6 +27,7 @@ For deploying into a Data Factory that is not integrated with a repository, also
 
 ## Version History
 
+* `0.1.5`: Move to a CLI package, and add several fixes 
 * `0.1.4`: Add object annotations to track what is managed by this package 
 * `0.1.3`: Extend schedule to handle when only the hours of the dayt are specified 
 * `0.1.2`: Change the name of the secret name for the SAS URI to access the config tables
