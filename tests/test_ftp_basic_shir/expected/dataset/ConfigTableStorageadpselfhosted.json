@@ -3,8 +3,7 @@
     "properties": {
         "linkedServiceName": {
             "referenceName": "ConfigTableStorageadp-self-hosted",
-            "type": "LinkedServiceReference",
-            "parameters": {}
+            "type": "LinkedServiceReference"
         },
         "parameters": {
             "TableName": {

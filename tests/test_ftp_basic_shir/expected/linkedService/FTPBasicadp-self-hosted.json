@@ -1,5 +1,6 @@
 {
     "name": "FTPBasicadp-self-hosted",
+    "type": "Microsoft.DataFactory/factories/linkedservices",
     "properties": {
         "type": "FtpServer",
         "parameters": {
@@ -28,7 +29,7 @@
             "password": {
                 "type": "AzureKeyVaultSecret",
                 "store": {
-                    "referenceName": "Credentials Store",
+                    "referenceName": "Credentials Storeadp-self-hosted",
                     "type": "LinkedServiceReference"
                 },
                 "secretName": "@{linkedService().KeyVaultSecretName}"

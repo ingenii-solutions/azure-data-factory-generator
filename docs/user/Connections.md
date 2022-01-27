@@ -6,11 +6,15 @@ Here we detail the different connection types that this package supports. Curren
 
 If not using the Ingenii Azure Data Platform, then there are some resources that need to be created ahead of using this package, as these are assumed to exist already. The below are used by all different pipelines.
 
-1. A key vault linked service called `Credentials Store`, where credentials and secrets are drawn from. 
-    1. It's recommended that the Data Factory managed identity is used to connect to the Key Vault
-    1. The Data Factory requires `Get` credentials to the `Secrets` key vault type.
-1. A data lake linked service called `Data Lake`:
-    1. In the data lake itself, a container called `raw` which the files will be copied to
+Please note that you will only need to create the resources themselves, as all Data Factory objects are created by the package.
+
+1. A [Key Vault](https://docs.microsoft.com/en-us/azure/key-vault/general/overview) where credentials and secrets are drawn from. 
+    1. The package uses the Data Factory system-assigned managed identity to connect to the Key Vault.
+    1. If using the `Vault access policy` permission model, please give the Data Factory `Get` credentials to the `Secrets` key vault type.
+    1. If using the `Azure role-based access control` permission model, please give the Data Factory the [`Key Vault Secrets User`](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#key-vault-secrets-user) IAM role.
+1. A [Data Lake](https://azure.microsoft.com/en-gb/services/storage/data-lake-storage) to host the retrieved data.
+    1. In the Data Lake itself, a container called `raw` which the files will be copied to.
+    2. Please grant the Data Factory system-assigned managed identity the [Storage Blob Data Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage-blob-data-contributor) IAM role.
 
 ## FTP/SFTP
 
@@ -21,7 +25,7 @@ As well as those listed in the [General requirements](#general_requirements), th
 1. Add to the data lake referenced by the linked service `Data Lake`:
     1. A table in table storage called `KnownSFTPFiles` where we keep track of which files have been processed
     1. A table called `Select1`, with an entry with PartitionKey `1` and RowKey `1`, for adding new entries to the `KnownSFTPFiles` table
-1. Add to the key vault referenced by the linked service `Credentials Store`:
+1. Add to the key vault created in the general requirements:
     1. The server password as a secret, with the name you have given in the config JSON at `config.key_vault_secret_name`
     1. A [SAS token](https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview) that grants access to the table storage in the data lake referenced by the linked service `Data Lake`.
         1. [Guide to creating a SAS token manually](https://docs.microsoft.com/en-us/azure/cognitive-services/translator/document-translation/create-sas-tokens?tabs=Containers)

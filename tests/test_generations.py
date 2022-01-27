@@ -1,8 +1,9 @@
-from azure_data_factory_generator.initialise import CreateDataFactoryObjects
 from deepdiff import DeepDiff
 import json
 import os
 import unittest
+
+from ingeniiadfg.initialise import CreateDataFactoryObjects
 
 
 class ExampleConfigGenerations(unittest.TestCase):

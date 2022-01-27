@@ -60,5 +60,6 @@
                 }
             }
         }
-    }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
 }

@@ -4,11 +4,11 @@ setup:
 	@cp .pypirc-dist .pypirc
 
 test:
-	pip install -e .
-	pytest ./tests
+	poetry install
+	poetry run pytest tests/
 
 build:
-	python setup.py bdist_wheel
+	poetry build
 
 check:
 	twine check dist/*

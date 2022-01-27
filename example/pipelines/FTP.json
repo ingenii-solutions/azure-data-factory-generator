@@ -102,7 +102,6 @@
                                     "referenceName": "DataLakeFolder",
                                     "type": "DatasetReference",
                                     "parameters": {
-                                        "AccountName": "adpproddatalakei2x",
                                         "FolderPath": "reprisk/example",
                                         "FileName": {
                                             "value": "@item().name",
