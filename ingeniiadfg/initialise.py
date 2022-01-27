@@ -342,7 +342,7 @@ class CreateDataFactoryObjects:
                                 "type": "PipelineReference"
                             }
                         }
-                        for pipeline in pipelines
+                        for pipeline in sorted(pipelines)
                     ],
                     "type": "ScheduleTrigger",
                     "typeProperties": {
