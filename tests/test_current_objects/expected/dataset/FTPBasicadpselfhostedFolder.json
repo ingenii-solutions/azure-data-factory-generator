@@ -1,0 +1,58 @@
+{
+    "name": "FTPBasicadpselfhostedFolder",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "FTPBasicadp-self-hosted",
+            "type": "LinkedServiceReference",
+            "parameters": {
+                "Host": {
+                    "value": "@dataset().Host",
+                    "type": "Expression"
+                },
+                "KeyVaultSecretName": {
+                    "value": "@dataset().KeyVaultSecretName",
+                    "type": "Expression"
+                },
+                "UserName": {
+                    "value": "@dataset().UserName",
+                    "type": "Expression"
+                },
+                "Port": {
+                    "value": "@dataset().Port",
+                    "type": "Expression"
+                }
+            }
+        },
+        "parameters": {
+            "FolderPath": {
+                "type": "string",
+                "defaultValue": "/"
+            },
+            "Host": {
+                "type": "String"
+            },
+            "KeyVaultSecretName": {
+                "type": "String"
+            },
+            "UserName": {
+                "type": "String"
+            },
+            "Port": {
+                "type": "Int",
+                "defaultValue": 21
+            }
+        },
+        "annotations": ["ManagedByIngeniiADFG"],
+        "type": "Binary",
+        "typeProperties": {
+            "location": {
+                "type": "FtpServerLocation",
+                "folderPath": {
+                    "value": "@dataset().FolderPath",
+                    "type": "Expression"
+                }
+            }
+        }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
+}

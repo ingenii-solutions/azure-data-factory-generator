@@ -15,6 +15,18 @@
                     "referenceName": "example-data-provider-1-table2",
                     "type": "PipelineReference"
                 }
+            },
+            {
+                "pipelineReference": {
+                    "referenceName": "example-data-provider-2-table1",
+                    "type": "PipelineReference"
+                }
+            },
+            {
+                "pipelineReference": {
+                    "referenceName": "example-data-provider-2-table2",
+                    "type": "PipelineReference"
+                }
             }
         ],
         "type": "ScheduleTrigger",

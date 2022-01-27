@@ -46,6 +46,8 @@ class CreateDataFactoryObjects:
         self.all_triggers = {}
         self.all_trigger_jsons = {}
 
+        self.credentials_store_per_ir = {}
+
         self.source_data_sets_per_type = {}
         self.target_data_sets = {}
 
@@ -118,7 +120,23 @@ class CreateDataFactoryObjects:
                         self.all_data_sets.add(
                             (config_ls, ir_name, config_dataset["name"]))
 
-        # Validation of configs
+            # Add the credentials store, if required
+            add_credentials_store = set()
+            for ls_name, ir_name in self.all_linked_services:
+                base_json = all_linked_services[ls_name]
+
+                for _, v in base_json["properties"]["typeProperties"].items():
+                    if not isinstance(v, dict):
+                        continue
+                    if v.get("type") == "AzureKeyVaultSecret":
+                        add_credentials_store.add(ir_name)
+
+            # Add this outside the loop so the set doesn't change size
+            for name in add_credentials_store:
+                self.all_linked_services.add(("Credentials Store", name))
+                self.credentials_store_per_ir[name] = \
+                    self.create_linked_service_name(
+                        "Credentials Store", name)
 
     @staticmethod
     def get_file_path(folder_path, json_to_write):
@@ -139,25 +157,41 @@ class CreateDataFactoryObjects:
         else:
             return f"{base_name}{integration_runtime_name}"
 
+    linked_service_preservation = (
+        ("AzureBlobFS", "url"),
+        ("AzureKeyVault", "baseUrl")
+    )
+
     def create_linked_service(self, base_json, integration_runtime_name):
-        new_linked_service = deepcopy(base_json)
+        new_ls_json = deepcopy(base_json)
         if integration_runtime_name != self.base_integration_runtime:
-            new_linked_service["name"] = \
+            new_ls_json["name"] = \
                 self.create_linked_service_name(base_json["name"],
                                                 integration_runtime_name)
-            new_linked_service["properties"]["connectVia"] = {
+            new_ls_json["properties"]["connectVia"] = {
                 "referenceName": integration_runtime_name,
                 "type": "IntegrationRuntimeReference"
             }
-        
-        curr_file = self.get_current_json(
-            self.linked_service_folder, new_linked_service)
-        if curr_file and not self.overwrite:
-            if curr_file["properties"]["type"] == "AzureBlobFS":
-                new_linked_service["properties"]["typeProperties"]["url"] = \
-                    curr_file["properties"]["typeProperties"]["url"]
 
-        return new_linked_service
+            for _, v in new_ls_json["properties"]["typeProperties"].items():
+                if not isinstance(v, dict):
+                    continue
+                if v.get("type") == "AzureKeyVaultSecret":
+                    v["store"]["referenceName"] = \
+                        self.credentials_store_per_ir[integration_runtime_name]
+
+        curr_file = self.get_current_json(
+            self.linked_service_folder, new_ls_json)
+        if curr_file and not self.overwrite:
+            for ls_type, replace_str in self.linked_service_preservation:
+                if curr_file["properties"]["type"] == ls_type:
+                    new_ls_json["properties"]["typeProperties"][
+                        replace_str
+                    ] = curr_file["properties"]["typeProperties"][
+                        replace_str
+                    ]
+
+        return new_ls_json
 
     def create_dataset_name(self, linked_service_name, data_set_template_name):
 

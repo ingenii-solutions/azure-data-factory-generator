@@ -1,0 +1,33 @@
+{
+    "name": "DataLakeadpselfhostedFolder",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "DataLakeadp-self-hosted",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "Container": {
+                "type": "string"
+            },
+            "FolderPath": {
+                "type": "string"
+            }
+        },
+        "annotations": ["ManagedByIngeniiADFG"],
+        "type": "Binary",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "folderPath": {
+                    "value": "@dataset().FolderPath",
+                    "type": "Expression"
+                },
+                "fileSystem": {
+                    "value": "@dataset().Container",
+                    "type": "Expression"
+                }
+            }
+        }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
+}

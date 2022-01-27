@@ -8,7 +8,7 @@
             "sasUri": {
                 "type": "AzureKeyVaultSecret",
                 "store": {
-                    "referenceName": "Credentials Store",
+                    "referenceName": "Credentials Storeadp-self-hosted",
                     "type": "LinkedServiceReference"
                 },
                 "secretName": "datalake-table-storage-sas-uri"
