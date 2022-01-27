@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    displayName: Test code and package
+    name: Test code and package
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
