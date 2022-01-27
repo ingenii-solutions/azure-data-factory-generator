@@ -21,41 +21,31 @@ Full details of the triggers supported to schedule your pipelines can be found i
 
 ## Generation
 
-A full example of how to structure your files in your own data engineering repository is given in the [Ingenii Azure Data Platform Data Engineering Example repository](https://github.com/ingenii-solutions/azure-data-platform-data-engineering-example), specifically in the [Pipeline Generation documentation](https://github.com/ingenii-solutions/azure-data-platform-data-engineering-example/blob/main/docs/user/Pipeline_Generation.md).
+A full example of how to structure your files in your own Data Factory repository is given in the [Ingenii Azure Data Factory Initial Repository](https://github.com/ingenii-solutions/azure-data-factory-initial-repository).
 
-In short, all your config `.json` files should be contained in a folder, and a folder provided for the Data Factory `.json` files to be created into. These can both be the same folder.
-
-In this package is a script to read your configuration files, aggregate to determine which objects are required, and then write out these objects in `.json` files to be uploaded. The command has the structure
+In this package is a script that reads your configuration files, aggregates to determine which objects are required, and then writes out these objects in `.json` files for the Data Factory to use. The command has the structure
 
 ```
-<python executable name> -m azure_data_factory_generator <folder that config .json files are held> <folder that the generated files should be added to>
+ingeniiadfg generate <folder that config .json files are held> <optional: folder that the generated files should be added to>
 ```
 
-So, if your configuration files are in a folder called `pipeline_generation`, you can run the command
+So, if your configuration files are in a folder called `adfg_configs`, you can run the command
 
 ```
-python -m azure_data_factory_generator pipeline_generation pipeline_generation
+ingeniiadfg generate adfg_configs
 ```
 
-This will read all the `.json` files it finds in the folder - it will not traverse into subfolders - and then add the generated objects into subfolders called `dataset`, `integrationruntime`, etc. These can then be committed to your git repository.
+This will read all the `.json` files it finds in the `adfg_configs` folder - it will not traverse into subfolders - and then add the generated objects into subfolders called `dataset`, `integrationruntime`, etc., at the folder that the command is run in which should be the root of your repository. These files can then be committed to your git repository to be used byt eh Data Factory.
 
 ## Deployment
 
 ### Approach
 
-[Azure does have recommendations and guides](https://docs.microsoft.com/en-us/azure/data-factory/continuous-integration-delivery) of how to deploy to a Data Factory, the `CD` part of `CI/CD`. We take a different approach for two reasons:
-
-1. Their apporoach involves developing the resources in a development Data Factory, where we are creating these through this Python package
-2. The approach of using an ARM template will define the entire Factory, while in our approach you can add other resources to your Data Factory directly, and this package will only manage the sub-set they create.
-
-### Tools
-
-1. [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/) to compare the current state of your Data Factory and update the resources as required. Details of how to install the `az` tool [can be found here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
-2. [jq](https://stedolan.github.io/jq/) to read and extract information from the generated `.json` files.
+[Azure has recommendations and guides](https://docs.microsoft.com/en-us/azure/data-factory/continuous-integration-delivery) of how to deploy to a Data Factory, the `CD` part of `CI/CD`. Please see our example CI/CD pipelines on the [`adf_publish` branch of the Ingenii Azure Data Factory Initial Repository](https://github.com/ingenii-solutions/azure-data-factory-initial-repository/tree/adf_publish).
 
 ### Deployment Scripts
 
-Example scripts to deploy the resources and remove anything in the Data Factory no longer needed are in the `deployment` folder of [this repository](https://github.com/ingenii-solutions/azure-data-factory-generator). You can use these for your own scripts, or please refer to the CI/CD pipeline for Azure DevOps we detail in the [Ingenii Azure Data Platform Data Engineering Example repository](https://github.com/ingenii-solutions/azure-data-platform-data-engineering-example).
+If for whatever reason you're not integrating your Data Factory with a repository - also known as `live` mode - we have some example scripts and pipelines in the `CICD` and `deployment` folders. Feel free to use these as the basis of your own approach.
 
 1. `add_objects.sh`: Deploys the resources, overwriting anything with the same name in the Data Factory already. The deployments must happen in this order as objects refer to each other; for example data sets expect the linked service to already exist, otherwise the deployment will fail.
 2. `clean_objects.sh`: Looks to remove any resources that the package once generated, but are now no longer used. Removes any resources with the annotation `ManagedByIngeniiADFG` which is in the Data Factory but not in the configuration. If there's a resource that you want to keep because you're using it in other pipelines, then you can remove the annotation to stop this behaviour. The exception is integration runtimes, which can't be annotated or removed using the CLI.
